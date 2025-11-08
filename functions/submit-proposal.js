@@ -1,49 +1,52 @@
-// netlify/functions/submit-proposal.js
-const { Octokit } = require("@octokit/rest");
+// /functions/submit-proposal.js
+import { Octokit } from "@octokit/rest";
 
-const GITHUB_USER = "nklinh102";
-const GITHUB_REPO = "gia-pha-files";
-const GIT_BRANCH = "main";
-const PROPOSALS_FILE_PATH = "data/proposals.json";
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
-exports.handler = async (event) => {
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  if (!GITHUB_TOKEN) {
-    return { statusCode: 500, body: "Lỗi cấu hình: Thiếu GITHUB_TOKEN." };
-  }
+  // (Tuỳ chọn) Bạn có thể thêm xác thực Admin như save-data nếu muốn:
+  // if (!(await isValidToken(request, env))) return new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+
   let newProposal;
   try {
-    newProposal = JSON.parse(event.body);
-    if (!newProposal || !newProposal.parentId || !newProposal.name) {
+    newProposal = await request.json();
+    if (!newProposal?.parentId || !newProposal?.name) {
       throw new Error("Dữ liệu đề xuất không hợp lệ.");
     }
   } catch (e) {
-    return { statusCode: 400, body: JSON.stringify({ message: e.message }) };
+    return new Response(JSON.stringify({ message: e.message }), { status: 400 });
   }
-  const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  let proposals = [];
-  let currentSha;
+
+  const octokit = new Octokit({ auth: env.GITHUB_TOKEN });
+  const PROPOSALS_FILE_PATH = "data/proposals.json";
+
   try {
+    let proposals = [];
+    let currentSha;
+
     try {
       const { data: fileData } = await octokit.repos.getContent({
-        owner: GITHUB_USER, repo: GITHUB_REPO, path: PROPOSALS_FILE_PATH, ref: GIT_BRANCH,
+        owner: env.GITHUB_USER, repo: env.GITHUB_REPO, path: PROPOSALS_FILE_PATH, ref: env.GIT_BRANCH,
       });
       currentSha = fileData.sha;
-      const content = Buffer.from(fileData.content, "base64").toString("utf8");
+      const content = atob(fileData.content);
       proposals = JSON.parse(content);
     } catch (e) {
       if (e.status !== 404) throw e;
     }
+
     proposals.push(newProposal);
-    const contentBase64 = Buffer.from(JSON.stringify(proposals, null, 2)).toString("base64");
+    const contentBase64 = btoa(JSON.stringify(proposals, null, 2));
+
     await octokit.repos.createOrUpdateFileContents({
-      owner: GITHUB_USER, repo: GITHUB_REPO, path: PROPOSALS_FILE_PATH, branch: GIT_BRANCH,
+      owner: env.GITHUB_USER, repo: env.GITHUB_REPO, path: PROPOSALS_FILE_PATH, branch: env.GIT_BRANCH,
       message: `Thêm đề xuất mới cho ${newProposal.parentId}`,
       content: contentBase64, sha: currentSha,
     });
-    return { statusCode: 200, body: JSON.stringify({ message: "Gửi đề xuất thành công!" }) };
+
+    return new Response(JSON.stringify({ message: "Gửi đề xuất thành công!" }), { status: 200 });
   } catch (error) {
-    console.error("Lỗi khi lưu đề xuất vào GitHub:", error);
-    return { statusCode: 500, body: JSON.stringify({ message: "Lỗi khi lưu đề xuất: " + error.message }) };
+    console.error("Proposal save error:", error);
+    return new Response(JSON.stringify({ message: "Lỗi khi lưu đề xuất: " + error.message }), { status: 500 });
   }
-};
+}
