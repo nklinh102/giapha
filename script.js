@@ -667,7 +667,7 @@ function updateNodeIcons() {
             let imgEl = domNodeIcons.get(node.id);
             if (!imgEl) {
                 imgEl = document.createElement('img'); imgEl.className = 'node-icon';
-                imgEl.src = 'https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/images/Khungten.png';
+                imgEl.src = 'https://pub-680f37ef25704fc58bf37caad665e004.r2.dev/media/Khungten.png';
                 container.appendChild(imgEl); domNodeIcons.set(node.id, imgEl);
             }
             const iconW = (node.depth === 0 ? 350 : 300) * scale;
