@@ -7,7 +7,7 @@ const TREE_DATA_PATH = 'data/'; // Sẽ nối thêm tên file, ví dụ 'tree-ho
 
 // CẤU HÌNH AUTH0:
 const AUTH0_DOMAIN = 'giapha.us.auth0.com'; // <<< ĐÃ CẬP NHẬT
-const AUTH0_CLIENT_ID = 'L3dlr1L8q5KKfvMUvSzx86Vq6vtykE51'; // ❗️❗️❗️ DÁN CLIENT ID CỦA BẠN VÀO ĐÂY ❗️❗️❗️
+const AUTH0_CLIENT_ID = 'L3dlr1L8q5KKfvMUvSzx86Vq6vtykE51'; // <<< ĐÃ CẬP NHẬT
 
 // ===================================================================
 // ====== Trạng thái & Hằng số ======
@@ -141,7 +141,12 @@ async function handleLogout() {
 async function updateAuthUI() {
     let isAuthenticated = false;
     if (auth0Client) {
-        isAuthenticated = await auth0Client.isAuthenticated();
+        try {
+          isAuthenticated = await auth0Client.isAuthenticated();
+        } catch(e) {
+          console.error("Lỗi khi kiểm tra xác thực Auth0:", e);
+          isAuthenticated = false;
+        }
     }
 
     if (isAuthenticated) {
@@ -209,6 +214,34 @@ async function callAdminFunction(functionName, payload, isFormData = false) {
     }
 }
 
+/**
+ * (MỚI) Dọn dẹp đối tượng data, loại bỏ các thuộc tính runtime
+ */
+function cleanDataForSave(node) {
+    if (!node) return null;
+    // Chỉ lưu các thuộc tính này
+    const cleanNode = {
+        id: node.id,
+        name: node.name,
+        birth: node.birth,
+        death: node.death,
+        note: node.note,
+        avatarUrl: node.avatarUrl
+    };
+    // Thuộc tính parentId chỉ có ở con, không có ở gốc
+    if (node.parentId) {
+        cleanNode.parentId = node.parentId;
+    }
+    // Đệ quy dọn dẹp các con
+    if (node.children && node.children.length > 0) {
+        cleanNode.children = node.children
+            .map(cleanDataForSave)
+            .filter(Boolean); // Lọc ra các node null (nếu có)
+    }
+    return cleanNode;
+}
+
+
 async function saveAllChanges() {
     // 1. Cập nhật globalSettings từ UI
     globalSettings.settings.bg_url = $('#bgUrlInput').value.trim();
@@ -223,12 +256,15 @@ async function saveAllChanges() {
     saveBtn.textContent = 'Đang lưu...';
     saveBtn.disabled = true;
 
-    // 2. Tạo các payload
-    const treePayload = { filePath: `${TREE_DATA_PATH}${currentTreeFileName}`, data: data };
+    // 2. (SỬA LỖI) Dọn dẹp dữ liệu cây trước khi lưu
+    const cleanTreeData = cleanDataForSave(data);
+
+    // 3. Tạo các payload
+    const treePayload = { filePath: `${TREE_DATA_PATH}${currentTreeFileName}`, data: cleanTreeData };
     const settingsPayload = { filePath: DB_FILE_PATH, data: globalSettings };
     const proposalsPayload = { filePath: PROPOSALS_FILE_PATH, data: allProposals };
 
-    // 3. Gọi lưu song song
+    // 4. Gọi lưu song song
     const results = await Promise.all([
         callAdminFunction('save-data', treePayload),
         callAdminFunction('save-data', settingsPayload),
@@ -653,7 +689,8 @@ function resizeCanvas() {
     if (treeCanvas.width !== rect.width * dpr || treeCanvas.height !== rect.height * dpr) {
         treeCanvas.width = rect.width * dpr; treeCanvas.height = rect.height * dpr;
         ctx.scale(dpr, dpr);
-        treeCanvas.style.width = rect.width + 'px'; treeCanvas.style.height = rect.height + 'px';
+        treeCanvas.style.width = rect.width + 'px';
+        treeCanvas.style.height = rect.height + 'px';
         scheduleRender();
     }
 }
@@ -1400,3 +1437,4 @@ if ('serviceWorker' in navigator) {
 
 // Bắt đầu chạy ứng dụng
 init();
+}
