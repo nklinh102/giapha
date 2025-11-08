@@ -196,7 +196,7 @@ async function callAdminFunction(functionName, payload, isFormData = false) {
             headers['Content-Type'] = 'application/json';
         }
 
-        const response = await fetch(`${API_BASE}/\1`, {
+        const response = await fetch(`${API_BASE}/${functionName}`, {
             method: 'POST',
             headers: headers,
             body: isFormData ? payload : JSON.stringify(payload) // Gửi FormData hoặc JSON
