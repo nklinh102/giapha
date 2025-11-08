@@ -8,6 +8,7 @@ const TREE_DATA_PATH = 'data/'; // Sẽ nối thêm tên file, ví dụ 'tree-ho
 // CẤU HÌNH AUTH0:
 const AUTH0_DOMAIN = 'giapha.us.auth0.com'; // <<< ĐÃ CẬP NHẬT
 const AUTH0_CLIENT_ID = 'L3dlr1L8q5KKfvMUvSzx86Vq6vtykE51'; // <<< ĐÃ CẬP NHẬT
+const API_BASE = '/api'; // Cloudflare Pages Functions base
 
 // ===================================================================
 // ====== Trạng thái & Hằng số ======
@@ -195,7 +196,7 @@ async function callAdminFunction(functionName, payload, isFormData = false) {
             headers['Content-Type'] = 'application/json';
         }
 
-        const response = await fetch(`/functions/${functionName}`, {
+        const response = await fetch(`${API_BASE}/\1`, {
             method: 'POST',
             headers: headers,
             body: isFormData ? payload : JSON.stringify(payload) // Gửi FormData hoặc JSON
@@ -899,7 +900,7 @@ function onProposeChild(parentNode) {
 
         // Gửi lên Worker (public, không cần token)
         try {
-            const response = await fetch('/functions/submit-proposal', {
+            const response = await fetch(`${API_BASE}/submit-proposal', {
                 method: 'POST',
                 body: JSON.stringify(tempChildNode)
             });
