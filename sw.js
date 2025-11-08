@@ -28,8 +28,9 @@ self.addEventListener('install', event => {
 
 // 2. Phục vụ tài nguyên từ cache (Cache-First, sau đó Network)
 self.addEventListener('fetch', event => {
-  // Bỏ qua các request của Netlify Identity và function
-  if (event.request.url.includes('/.netlify/')) {
+  
+  // (SỬA LỖI: Bỏ qua các request của Cloudflare function)
+  if (event.request.url.includes('/functions/')) {
     return fetch(event.request);
   }
   
