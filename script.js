@@ -8,7 +8,7 @@ const TREE_DATA_PATH = 'data/'; // Sẽ nối thêm tên file
 // CẤU HÌNH AUTH0:
 const AUTH0_DOMAIN = 'giapha.us.auth0.com';
 const AUTH0_CLIENT_ID = '06Uoi9iePqu8n5UIgXdP0MoqbXNUx85v';
-const API_BASE = '/api'; // Cloudflare Pages Functions base
+const API_BASE = ''; // Cloudflare Pages Functions base
 
 // ===================================================================
 // ====== Trạng thái & Hằng số ======
