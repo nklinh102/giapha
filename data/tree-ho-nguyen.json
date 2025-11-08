@@ -1,2 +1,386 @@
-[
+	[
+  {
+    "id": 1,
+    "parentId": "",
+    "name": "Cụ tổ 2",
+    "birth": 1950,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": 45658,
+    "parentId": 1,
+    "name": "Nguyễn Văn B (Con trưởng)",
+    "birth": 1905,
+    "death": 1975,
+    "note": ""
+  },
+  {
+    "id": 36892,
+    "parentId": 45658,
+    "name": "Nguyễn Văn E",
+    "birth": 1930,
+    "death": 2005,
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1",
+    "parentId": 36892,
+    "name": "Nguyễn Văn J",
+    "birth": 1955,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1",
+    "parentId": "1.1.1.1",
+    "name": "Nguyễn Văn Q",
+    "birth": 1980,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1.1",
+    "parentId": "1.1.1.1.1",
+    "name": "Nguyễn Bảo An",
+    "birth": 2005,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1.1.1",
+    "parentId": "1.1.1.1.1.1",
+    "name": "Con của An 1",
+    "birth": 2030,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1.1.2",
+    "parentId": "1.1.1.1.1.1",
+    "name": "Con của An 2",
+    "birth": 2032,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1.2",
+    "parentId": "1.1.1.1.1",
+    "name": "Nguyễn Bảo Bình",
+    "birth": 2007,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.1.2.1",
+    "parentId": "1.1.1.1.1.2",
+    "name": "Con của Bình",
+    "birth": 2035,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.1.2",
+    "parentId": "1.1.1.1",
+    "name": "Nguyễn Thị R",
+    "birth": 1982,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.2",
+    "parentId": 36892,
+    "name": "Nguyễn Thị K",
+    "birth": 1958,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.2.1",
+    "parentId": "1.1.1.2",
+    "name": "Lê Văn S (chồng cô K)",
+    "birth": 1980,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.2.2",
+    "parentId": "1.1.1.2",
+    "name": "Con gái thứ 2 cô K",
+    "birth": 1985,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.1.2.3",
+    "parentId": "1.1.1.2",
+    "name": "Con trai út cô K",
+    "birth": 1990,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": 37257,
+    "parentId": 45658,
+    "name": "Nguyễn Văn F",
+    "birth": 1933,
+    "death": 2010,
+    "note": ""
+  },
+  {
+    "id": "1.1.2.1",
+    "parentId": 37257,
+    "name": "Nguyễn Văn L",
+    "birth": 1960,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.1.1",
+    "parentId": "1.1.2.1",
+    "name": "Nguyễn Văn T",
+    "birth": 1985,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.1.1.1",
+    "parentId": "1.1.2.1.1",
+    "name": "Nguyễn Minh Châu",
+    "birth": 2010,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.1.1.2",
+    "parentId": "1.1.2.1.1",
+    "name": "Con thứ 2 của T",
+    "birth": 2014,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.1.2",
+    "parentId": "1.1.2.1",
+    "name": "Con gái ông L",
+    "birth": 1988,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.2",
+    "parentId": 37257,
+    "name": "Nguyễn Văn M",
+    "birth": 1962,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.2.1",
+    "parentId": "1.1.2.2",
+    "name": "Nguyễn Thị U",
+    "birth": 1988,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.1.2.2.1.1",
+    "parentId": "1.1.2.2.1",
+    "name": "Hoàng Minh Đức (chồng cô U)",
+    "birth": 2012,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": 45689,
+    "parentId": 1,
+    "name": "Nguyễn Thị C",
+    "birth": 1908,
+    "death": 1980,
+    "note": ""
+  },
+  {
+    "id": 36923,
+    "parentId": 45689,
+    "name": "Trần Thị G (con gái bà C)",
+    "birth": 1935,
+    "death": 2015,
+    "note": ""
+  },
+  {
+    "id": "1.2.1.1",
+    "parentId": 36923,
+    "name": "Trần Văn N",
+    "birth": 1961,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.2.1.1.1",
+    "parentId": "1.2.1.1",
+    "name": "Trần Thị V",
+    "birth": 1986,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.2.1.1.1.1",
+    "parentId": "1.2.1.1.1",
+    "name": "Vũ Minh Anh",
+    "birth": 2011,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.2.1.1.2",
+    "parentId": "1.2.1.1",
+    "name": "Con trai ông N",
+    "birth": 1989,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": 45717,
+    "parentId": 1,
+    "name": "Nguyễn Văn D (Con út)",
+    "birth": 1912,
+    "death": 1990,
+    "note": ""
+  },
+  {
+    "id": 36951,
+    "parentId": 45717,
+    "name": "Nguyễn Văn H",
+    "birth": 1940,
+    "death": 2018,
+    "note": ""
+  },
+  {
+    "id": "1.3.1.1",
+    "parentId": 36951,
+    "name": "Nguyễn Thị O",
+    "birth": 1965,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.1.1",
+    "parentId": "1.3.1.1",
+    "name": "Phạm Văn X (chồng cô O)",
+    "birth": 1984,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.1.2",
+    "parentId": "1.3.1.1",
+    "name": "Con gái cô O",
+    "birth": 1989,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2",
+    "parentId": 36951,
+    "name": "Nguyễn Văn P",
+    "birth": 1968,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.1",
+    "parentId": "1.3.1.2",
+    "name": "Nguyễn Văn Y",
+    "birth": 1990,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.1.1",
+    "parentId": "1.3.1.2.1",
+    "name": "Nguyễn Gia Hân",
+    "birth": 2015,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.1.2",
+    "parentId": "1.3.1.2.1",
+    "name": "Nguyễn Gia Khiêm",
+    "birth": 2018,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.2",
+    "parentId": "1.3.1.2",
+    "name": "Nguyễn Văn Z",
+    "birth": 1992,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.2.1",
+    "parentId": "1.3.1.2.2",
+    "name": "Nguyễn Quang Minh",
+    "birth": 2020,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.1.2.3",
+    "parentId": "1.3.1.2",
+    "name": "Con út ông P",
+    "birth": 1995,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": 37316,
+    "parentId": 45717,
+    "name": "Nguyễn Thị I",
+    "birth": 1942,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.2.1",
+    "parentId": 37316,
+    "name": "Con trai cô I",
+    "birth": 1970,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.2.1.1",
+    "parentId": "1.3.2.1",
+    "name": "Cháu trai cô I",
+    "birth": 1995,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.2.1.1.1",
+    "parentId": "1.3.2.1.1",
+    "name": "Chắt trai cô I",
+    "birth": 2022,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.2.1.2",
+    "parentId": "1.3.2.1",
+    "name": "Cháu gái cô I",
+    "birth": 1998,
+    "death": "",
+    "note": ""
+  },
+  {
+    "id": "1.3.2.2",
+    "parentId": 37316,
+    "name": "Con gái cô I",
+    "birth": 1972,
+    "death": "",
+    "note": ""
+  }
 ]
