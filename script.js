@@ -1437,4 +1437,3 @@ if ('serviceWorker' in navigator) {
 
 // Bắt đầu chạy ứng dụng
 init();
-}
