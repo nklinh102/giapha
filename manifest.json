@@ -1,0 +1,21 @@
+{
+  "name": "Sơ Đồ Gia Phả",
+  "short_name": "Gia Phả",
+  "description": "Ứng dụng tạo và quản lý sơ đồ gia phả trực tuyến.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#2a1d1d",
+  "theme_color": "#3d2c2c",
+  "icons": [
+    {
+      "src": "media/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "media/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
