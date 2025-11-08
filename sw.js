@@ -1,80 +1,55 @@
-// Đặt tên và phiên bản cho cache
-const CACHE_NAME = 'family-tree-cache-v2'; // Tăng phiên bản cache
-
-// Danh sách các file cần thiết để ứng dụng hoạt động offline
+// /sw.js
+const CACHE_NAME = 'family-tree-cache-v3';
 const URLS_TO_CACHE = [
-  '/',
-  'index.html',
-  'styles.css',
-  'script.js',
-  'manifest.json',
-  'favicon.ico',
+  './',
+  './index.html',
+  './styles.css',
+  './script.js',
+  './manifest.json',
+  './favicon.ico',
   'https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js',
   'https://fonts.googleapis.com/css2?family=Tac+One&display=swap',
 ];
 
-// 1. Cài đặt Service Worker và cache các tài nguyên
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE).catch(err => {
-            console.warn('Không thể cache một số tài nguyên:', err);
-        });
-      })
-  );
-});
-
-// 2. Phục vụ tài nguyên từ cache (Cache-First, sau đó Network)
-self.addEventListener('fetch', event => {
-  
-  // (SỬA LỖI: Bỏ qua các request của Cloudflare function)
-  if (event.request.url.includes('/functions/')) {
-    return fetch(event.request);
-  }
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Nếu tìm thấy trong cache, trả về nó
-        if (response) {
-          return response;
-        }
-
-        // Nếu không, đi lấy từ mạng
-        return fetch(event.request).then(
-          networkResponse => {
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
-            }
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-            return networkResponse;
-          }
-        ).catch(err => {
-            console.error('Fetch failed', err);
-        });
-      }
-    )
-  );
-});
-
-// 3. Xóa các cache cũ khi Service Worker được cập nhật
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    caches.open(CACHE_NAME).then((cache) => {
+      const reqs = URLS_TO_CACHE.map((u) => new Request(new URL(u, self.location), { credentials: 'omit' }));
+      return cache.addAll(reqs);
     })
   );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k))));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+
+  // Bỏ qua request không phải GET hoặc các call tới API (tránh cache sai)
+  const isApi = new URL(req.url).pathname.startsWith('/api/');
+  if (req.method !== 'GET' || isApi) return;
+
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    try {
+      const fresh = await fetch(req);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(req, fresh.clone());
+      return fresh;
+    } catch {
+      // Fallback: nếu offline và không có cache — trả index.html (SPA)
+      if (req.mode === 'navigate') {
+        return caches.match('./index.html');
+      }
+      throw;
+    }
+  })());
 });
