@@ -1,0 +1,28 @@
+{
+  "id": "1",
+  "name": "Tổ tiên",
+  "birth": "1900",
+  "children": [
+    {
+      "id": "1.1",
+      "name": "fsf",
+      "birth": "",
+      "death": "",
+      "note": "dsdsd",
+      "avatarUrl": "https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/media/avatars/1762573905711-z6819690854446_dbb3cfde1cb9edded91d852365cc540b.jpg",
+      "children": [],
+      "_w": 330,
+      "_h": 85,
+      "depth": 1,
+      "_y": 237.5,
+      "_x": 250,
+      "_norm": "fsf"
+    }
+  ],
+  "_w": 400,
+  "_h": 90,
+  "depth": 0,
+  "_y": 100,
+  "_x": 250,
+  "_norm": "to tien1900"
+}
