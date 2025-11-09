@@ -1,10 +1,22 @@
 // /functions/upload-media.js
 
-// === SỬA LỖI: Đổi thư viện polyfill ===
-import { DOMParser, Node } from 'xmldom'; // <-- ĐÃ THAY ĐỔI
+// === SỬA LỖI: Polyfill cho các hằng số của Node ===
+import { DOMParser, Node } from 'xmldom'; // Import thêm Node
 self.DOMParser = DOMParser;
 self.Node = Node;
-// ===================================
+
+// Thư viện AWS SDK cần các hằng số này, nhưng 'xmldom' không cung cấp
+// Chúng ta phải tự định nghĩa chúng
+if (!self.Node.TEXT_NODE) {
+  self.Node.TEXT_NODE = 3;
+}
+if (!self.Node.ELEMENT_NODE) {
+  self.Node.ELEMENT_NODE = 1;
+}
+if (!self.Node.COMMENT_NODE) {
+  self.Node.COMMENT_NODE = 8;
+}
+// ===========================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -41,9 +53,7 @@ async function verifyAuth0JWT(token, env) {
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(p)));
   
-  // === SỬA LỖI TYPO CỦA TÔI ===
-  if (header.alg !== 'RS256') throw new Error('Unsupported alg'); // <-- Đã sửa từ 'RS26'
-  // ==========================
+  if (header.alg !== 'RS256') throw new Error('Unsupported alg');
 
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
