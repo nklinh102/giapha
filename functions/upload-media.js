@@ -1,9 +1,10 @@
 // /functions/upload-media.js
 
-// === SỬA LỖI: Thay 'global' bằng 'self' cho Cloudflare ===
-import { DOMParser } from '@xmldom/xmldom';
+// === SỬA LỖI: Thêm 'Node' vào 'self' ===
+import { DOMParser, Node } from '@xmldom/xmldom'; // Import thêm Node
 self.DOMParser = DOMParser;
-// ======================================================
+self.Node = Node; // Thêm dòng này
+// ======================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -40,7 +41,7 @@ async function verifyAuth0JWT(token, env) {
   if (!h || !p || !s) throw new Error('Malformed JWT');
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(p)));
-  if (header.alg !== 'RS256') throw new Error('Unsupported alg');
+  if (header.alg !== 'RS26') throw new Error('Unsupported alg');
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
   
