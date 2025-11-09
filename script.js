@@ -1,9 +1,15 @@
 // ===================================================================
 // ====== THÔNG TIN CẤU HÌNH ======
 // ===================================================================
-const DB_FILE_PATH = 'data/db.json';
-const PROPOSALS_FILE_PATH = 'data/proposals.json';
-const TREE_DATA_PATH = 'data/'; // Sẽ nối thêm tên file
+
+// === THAY ĐỔI: Chuyển sang đọc file JSON từ R2 ===
+// URL public R2 bucket của bạn (lấy từ các file media bạn đã gửi)
+const R2_PUBLIC_URL = 'https://pub-680f37ef25704fc58bf37caad665e004.r2.dev'; 
+
+const DB_FILE_PATH = `${R2_PUBLIC_URL}/data/db.json`;
+const PROPOSALS_FILE_PATH = `${R2_PUBLIC_URL}/data/proposals.json`;
+const TREE_DATA_PATH = `${R2_PUBLIC_URL}/data/`; // Nối thêm tên file, ví dụ: "data/tree-ho-nguyen.json"
+// === KẾT THÚC THAY ĐỔI ===
 
 // CẤU HÌNH AUTH0:
 const AUTH0_DOMAIN = 'giapha.us.auth0.com';
@@ -105,6 +111,7 @@ async function parseJsonSafe(response, urlForMsg = '') {
 }
 
 async function fetchJSON(url) {
+  // Thêm ?v=Date.now() để luôn lấy file mới nhất, tránh cache
   const res = await fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
   return parseJsonSafe(res, url);
 }
@@ -261,10 +268,10 @@ async function saveAllChanges() {
   // 2. Dọn dữ liệu
   const cleanTreeData = cleanDataForSave(data);
 
-  // 3. Payload
-  const treePayload = { filePath: `${TREE_DATA_PATH}${currentTreeFileName}`, data: cleanTreeData };
-  const settingsPayload = { filePath: DB_FILE_PATH, data: globalSettings };
-  const proposalsPayload = { filePath: PROPOSALS_FILE_PATH, data: allProposals };
+  // 3. Payload (Đã cập nhật: đường dẫn file trên R2)
+  const treePayload = { filePath: `data/${currentTreeFileName}`, data: cleanTreeData };
+  const settingsPayload = { filePath: 'data/db.json', data: globalSettings };
+  const proposalsPayload = { filePath: 'data/proposals.json', data: allProposals };
 
   // 4. Lưu song song
   const results = await Promise.all([
@@ -362,6 +369,7 @@ async function loadTreeData(fileName) {
 
   try {
     const [treeData, proposalData] = await Promise.all([
+      // Đọc từ R2
       fetchJSON(`${TREE_DATA_PATH}${fileName}`),
       fetchJSON(PROPOSALS_FILE_PATH)
     ]);
@@ -629,7 +637,7 @@ function drawNode(node) {
       if (meta) {
         ctx.font = `13px sans-serif`;
         ctx.fillText(meta, node._x, topOfNode + 28 + fontSize * 1.3);
-      }
+Â      }
     } else {
       ctx.textBaseline = 'middle';
       ctx.fillText(name, node._x, node._y - (meta ? 8 : 0));
@@ -651,19 +659,19 @@ function drawGenerations() {
     const text = `Đời ${i + 1}`; const textMetrics = ctx.measureText(text);
     const padding = { x: 4, y: 8 };
     const rectW = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent + padding.y * 2;
-    const rectH = textMetrics.width + padding.x * 2; const rectX = 10;
+Â    const rectH = textMetrics.width + padding.x * 2; const rectX = 10;
     const rectY = yPositions[i] - rectH / 2;
     ctx.fillStyle = getCssVar('--panel'); ctx.strokeStyle = getCssVar('--border'); ctx.lineWidth = 1;
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(rectX, rectY, rectW, rectH, [8]); else ctx.rect(rectX, rectY, rectW, rectH);
     ctx.fill(); ctx.stroke();
-    ctx.fillStyle = getCssVar('--muted');
+Â    ctx.fillStyle = getCssVar('--muted');
     ctx.translate(rectX + rectW / 2, yPositions[i]); ctx.rotate(Math.PI / 2); ctx.fillText(text, 0, 0);
     ctx.restore();
   }
 }
 function updateDecoration() {
-  if (!data || !decorationSettings.visible) { treeDecoration.style.visibility = 'hidden'; return; }
+Â  if (!data || !decorationSettings.visible) { treeDecoration.style.visibility = 'hidden'; return; }
   const worldX = data._x; const worldY = data._y - data._h / 2 - decorationSettings.distance;
   const screenX = (worldX * scale) + panX; const screenY = (worldY * scale) + panY;
   const decorationSize = decorationSettings.size * scale;
@@ -671,7 +679,7 @@ function updateDecoration() {
   if (screenX + decorationSize < 0 || screenX - decorationSize > canvasRect.width || screenY + decorationSize < 0 || screenY > canvasRect.height) {
     treeDecoration.style.visibility = 'hidden';
   } else {
-    treeDecoration.style.visibility = 'visible';
+Â    treeDecoration.style.visibility = 'visible';
     treeDecoration.style.width = decorationSize + 'px';
     treeDecoration.style.opacity = decorationSettings.opacity;
     treeDecoration.style.transform = `translate(${screenX - decorationSize / 2}px, ${screenY}px)`;
@@ -695,7 +703,7 @@ function updateNodeIcons() {
       const screenX = (node._x * scale) + panX; const screenY = (node._y * scale) + panY;
       imgEl.style.transform = `translate(${screenX - iconW / 2}px, ${screenY - iconH / 2}px)`;
       imgEl.style.width = iconW + 'px'; imgEl.style.height = iconH + 'px';
-    }
+Â    }
     (node.children || []).forEach(walk);
   })(data);
 
@@ -971,7 +979,7 @@ async function onAcceptProposal(node) {
   node.id = generateHierarchicalId(findParent(data, node.id));
 
   setUnsavedChanges(true);
-  await saveAllChanges();
+  await saveAllChanges(); // Hàm này sẽ lưu mảng allProposals đã cập nhật
 
   highlightedNodeId = null;
   updateSelectionActions();
@@ -982,15 +990,18 @@ async function onAcceptProposal(node) {
 async function onRejectProposal(node) {
   pushHistory();
 
+  // Bỏ khỏi allProposals
   const proposalIndex = allProposals.findIndex(p => p.proposalId === node.id);
   if (proposalIndex > -1) allProposals.splice(proposalIndex, 1);
 
+  // Bỏ khỏi cây (UI)
   const parent = findParent(data, node.id);
   if (parent && parent.children) {
     parent.children = parent.children.filter(c => c.id !== node.id);
   }
 
-  const proposalsPayload = { filePath: PROPOSALS_FILE_PATH, data: allProposals };
+  // Chỉ lưu lại file proposals
+  const proposalsPayload = { filePath: 'data/proposals.json', data: allProposals };
   const { success } = await callAdminFunction('save-data', proposalsPayload);
 
   alert(success ? 'Đã từ chối đề xuất.' : 'Lỗi khi từ chối. Vui lòng thử lại.');
@@ -1313,9 +1324,7 @@ function populateAudioSidebar() {
             });
           }
         } else {
-      _message
           if (!globalAudioPlayer.src || globalAudioPlayer.src !== directAudioUrl || !globalAudioPlayer.duration) return;
-code_part
           const rect = clickedItem.getBoundingClientRect(); const clickX = e.clientX - rect.left; const width = clickedItem.clientWidth;
           const seekRatio = clickX / width; globalAudioPlayer.currentTime = seekRatio * globalAudioPlayer.duration;
         }
@@ -1331,6 +1340,7 @@ function showMedia(type, index) {
     const item = allImages[currentImageIndex]; const img = document.createElement('img');
     img.style.maxHeight = '80vh'; img.style.maxWidth = '100%'; img.style.objectFit = 'contain';
     const nav = document.createElement('div'); nav.id = 'gallery-nav'; nav.innerHTML = `<button id="gallery-prev">&lt;</button><button id="gallery-next">&gt;</button>`;
+section
     mediaContent.innerHTML = ''; mediaContent.append(img, nav);
     $('#gallery-prev').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex - 1) % allImages.length; if (currentImageIndex < 0) currentImageIndex += allImages.length; updateImageViewer(); };
     $('#gallery-next').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex + 1) % allImages.length; updateImageViewer(); };
@@ -1390,7 +1400,7 @@ function init() {
     gapX = parseInt(e.target.value, 10);
     $('#gapValueLabel').textContent = gapX;
     updateLayout(); scheduleRender(); setUnsavedChanges(true);
-  });
+Â  });
 
   disableEditing();
   $('#btnSaveChanges').onclick = saveAllChanges;
@@ -1445,12 +1455,14 @@ function init() {
   $('#toggleDecoration').onchange = (e) => { decorationSettings.visible = e.target.checked; setUnsavedChanges(true); scheduleRender(); };
   decorationSizeSlider.addEventListener('input', (e) => { decorationSettings.size = parseInt(e.target.value, 10); decorationSizeLabel.textContent = decorationSettings.size; setUnsavedChanges(true); scheduleRender(); });
   decorationDistanceSlider.addEventListener('input', (e) => { decorationSettings.distance = parseInt(e.target.value, 10); decorationDistanceLabel.textContent = decorationSettings.distance; setUnsavedChanges(true); scheduleRender(); });
+s
   $('#decorationUrlInput').addEventListener('input', (e) => { decorationSettings.url = e.target.value; treeDecoration.src = e.target.value; setUnsavedChanges(true); });
 
   const imageSidebar = $('#image-sidebar'), audioSidebar = $('#audio-sidebar'), globalAudioPlayer = $('#global-audio-player');
   const closeAllMediaSidebars = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.remove('show'); overlay.classList.remove('show-for-media'); };
   $('#btnToggleImageAlbum').onclick = () => { audioSidebar.classList.remove('show'); imageSidebar.classList.toggle('show'); if (imageSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
   $('#btnToggleAudioAlbum').onclick = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
+s
   $('#btnCloseImage').onclick = () => { imageSidebar.classList.remove('show'); if (!audioSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#btnCloseAudio').onclick = () => { audioSidebar.classList.remove('show'); if (!imageSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
@@ -1495,6 +1507,7 @@ window.addEventListener('keydown', (e) => {
   if (e.target.matches('input,textarea,h1')) return;
   if (isOwner) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+section
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
   }
   if (e.key.toLowerCase() === 'f') { e.preventDefault(); fitToScreen(); }
@@ -1523,6 +1536,7 @@ function applyTheme(theme) {
 // Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+section
     navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('SW registered:', reg.scope))
       .catch(err => console.log('SW registration failed:', err));
