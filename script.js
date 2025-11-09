@@ -8,7 +8,11 @@ const TREE_DATA_PATH = 'data/'; // Sẽ nối thêm tên file
 // CẤU HÌNH AUTH0:
 const AUTH0_DOMAIN = 'giapha.us.auth0.com';
 const AUTH0_CLIENT_ID = '06Uoi9iePqu8n5UIgXdP0MoqbXNUx85v';
-const API_BASE = ''; // Cloudflare Pages Functions base
+// >>> THÊM DÒNG NÀY: audience phải đúng Identifier của API trong Auth0
+const AUTH0_AUDIENCE = 'https://giapha-api';
+
+// Cloudflare Pages Functions base; cùng domain thì để rỗng
+const API_BASE = '';
 
 // ===================================================================
 // ====== Trạng thái & Hằng số ======
@@ -110,12 +114,13 @@ async function fetchJSON(url) {
 // ===================================================================
 async function configureAuth0() {
   try {
+    // >>> SỬA: truyền audience vào authorizationParams
     auth0Client = await auth0.createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENT_ID,
       authorizationParams: {
-        redirect_uri: window.location.origin
-        // audience: 'YOUR_API_AUDIENCE'
+        redirect_uri: window.location.origin,
+        audience: AUTH0_AUDIENCE
       }
     });
 
@@ -126,7 +131,6 @@ async function configureAuth0() {
       } catch (e) {
         console.error('Auth0 handleRedirectCallback lỗi:', e);
       } finally {
-        // Đưa URL về gốc (giữ nguyên path hiện tại nếu cần)
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -140,7 +144,10 @@ async function configureAuth0() {
 
 async function handleLogin() {
   if (!auth0Client) return;
-  await auth0Client.loginWithRedirect();
+  // >>> SỬA: đảm bảo audience khi login
+  await auth0Client.loginWithRedirect({
+    authorizationParams: { audience: AUTH0_AUDIENCE }
+  });
 }
 
 async function handleLogout() {
@@ -194,7 +201,11 @@ async function callAdminFunction(functionName, payload, isFormData = false) {
   }
 
   try {
-    const token = await auth0Client.getTokenSilently();
+    // >>> SỬA: xin token kèm audience để có "aud" đúng
+    const token = await auth0Client.getTokenSilently({
+      authorizationParams: { audience: AUTH0_AUDIENCE }
+    });
+
     const headers = { 'Authorization': `Bearer ${token}` };
     if (!isFormData) headers['Content-Type'] = 'application/json';
 
@@ -274,7 +285,6 @@ async function saveAllChanges() {
 
 // ===================================================================
 // ====== TẢI ẢNH LÊN (R2) ======
-// ===================================================================
 async function uploadImageToR2(file) {
   const formData = new FormData();
   formData.append('file', file, file.name);
@@ -294,7 +304,6 @@ async function uploadImageToR2(file) {
 
 // ===================================================================
 // ====== TẢI DỮ LIỆU JSON ======
-// ===================================================================
 async function loadInitialData() {
   document.body.style.cursor = 'wait';
   try {
@@ -901,7 +910,7 @@ function updateSelectionActions() {
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'btn'; deleteBtn.id = 'act-delete-node';
       deleteBtn.style.background = 'var(--danger)'; deleteBtn.style.color = 'white';
-      deleteBtn.innerHTML = `<svg fill='none' height='16' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='16'><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/><line x1='10' x2='10' y1='11' y2='17'/><line x1='14' x2='14' y1='11' y2='17'/></svg> Xóa`;
+      deleteBtn.innerHTML = `<svg fill='none' height='16' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='16'><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/><line x1='10' x2='10' y1='11' y2='17'/></svg> Xóa`;
       deleteBtn.onclick = () => onDel(node);
       actionsGrid.append(addChildBtn, editBtn, deleteBtn);
     }
@@ -925,7 +934,6 @@ function onProposeChild(parentNode) {
     };
 
     try {
-      // FIX: template string đúng + headers JSON
       const res = await fetch(`${API_BASE}/submit-proposal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1316,13 +1324,13 @@ function populateAudioSidebar() {
 }
 function showMedia(type, index) {
   if (type !== 'image' || allImages.length === 0) return; currentImageIndex = index;
-  const mediaViewer = $('#media-viewer'); const mediaContent = $('#media-content');
+  const mediaViewer = $('#media-viewer'); const mediaContent = $('#media-content']);
   function updateImageViewer() {
     const item = allImages[currentImageIndex]; const img = document.createElement('img');
     img.style.maxHeight = '80vh'; img.style.maxWidth = '100%'; img.style.objectFit = 'contain';
     const nav = document.createElement('div'); nav.id = 'gallery-nav'; nav.innerHTML = `<button id="gallery-prev">&lt;</button><button id="gallery-next">&gt;</button>`;
     mediaContent.innerHTML = ''; mediaContent.append(img, nav);
-    $('#gallery-prev').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length; updateImageViewer(); };
+    $('#gallery-prev').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex - 1) % allImages.length; if (currentImageIndex < 0) currentImageIndex += allImages.length; updateImageViewer(); };
     $('#gallery-next').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex + 1) % allImages.length; updateImageViewer(); };
     img.onerror = () => { mediaContent.innerHTML = `<div style="padding: 2rem; color: var(--danger);">Không thể tải hình ảnh.</div>`; };
     img.src = item.url; $('#media-title').textContent = item.name;
@@ -1429,8 +1437,8 @@ function init() {
   $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true));
   $('#appTitle').addEventListener('blur', () => { if (isOwner) setUnsavedChanges(true); });
 
-  const decorationSizeSlider = $('#decorationSizeSlider'), decorationSizeLabel = $('#decorationSizeLabel');
-  const decorationDistanceSlider = $('#decorationDistanceSlider'), decorationDistanceLabel = $('#decorationDistanceLabel');
+  const decorationSizeSlider = $('#decorationSizeSlider'), decorationSizeLabel = $('#decorationSizeLabel'];
+  const decorationDistanceSlider = $('#decorationDistanceSlider'), decorationDistanceLabel = $('#decorationDistanceLabel'];
   updateControlsUI();
   $('#toggleDecoration').onchange = (e) => { decorationSettings.visible = e.target.checked; setUnsavedChanges(true); scheduleRender(); };
   decorationSizeSlider.addEventListener('input', (e) => { decorationSettings.size = parseInt(e.target.value, 10); decorationSizeLabel.textContent = decorationSettings.size; setUnsavedChanges(true); scheduleRender(); });
