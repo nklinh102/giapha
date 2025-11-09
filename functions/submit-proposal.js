@@ -1,7 +1,10 @@
 // /functions/submit-proposal.js
+
+// === SỬA LỖI: Thay 'global' bằng 'self' cho Cloudflare ===
 import { DOMParser } from '@xmldom/xmldom';
-global.DOMParser = DOMParser;
-// ======================================
+self.DOMParser = DOMParser;
+// ======================================================
+
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const PROPOSALS_FILE_PATH = "data/proposals.json";
@@ -78,7 +81,7 @@ export async function onRequestPost(context) {
       Key: PROPOSALS_FILE_PATH,
       Body: dataStr,
       ContentType: "application/json; charset=utf-8",
-      ACL: "public-read" // Quan trọng: Để client (script.js) có thể đọc
+      ACL: "public-read"
     }));
 
     // 6. Trả về thành công
