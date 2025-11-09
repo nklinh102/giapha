@@ -1,22 +1,19 @@
 // /functions/upload-media.js
 
-// === SỬA LỖI: Polyfill cho các hằng số của Node ===
-import { DOMParser, Node } from 'xmldom'; // Import thêm Node
+// === SỬA LỖI: Polyfill cho DOMParser và TỰ TẠO Node constants ===
+import { DOMParser } from 'xmldom';
 self.DOMParser = DOMParser;
-self.Node = Node;
 
-// Thư viện AWS SDK cần các hằng số này, nhưng 'xmldom' không cung cấp
-// Chúng ta phải tự định nghĩa chúng
-if (!self.Node.TEXT_NODE) {
-  self.Node.TEXT_NODE = 3;
+// Tự tạo đối tượng Node và các hằng số mà AWS SDK cần
+// vì môi trường Worker không có sẵn.
+if (typeof self.Node === 'undefined') {
+  self.Node = {
+    TEXT_NODE: 3,
+    ELEMENT_NODE: 1,
+    COMMENT_NODE: 8
+  };
 }
-if (!self.Node.ELEMENT_NODE) {
-  self.Node.ELEMENT_NODE = 1;
-}
-if (!self.Node.COMMENT_NODE) {
-  self.Node.COMMENT_NODE = 8;
-}
-// ===========================================
+// ========================================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
