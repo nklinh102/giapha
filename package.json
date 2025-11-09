@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.927.0",
+    "@xmldom/xmldom": "^0.8.11",
     "jose": "^6.1.0"
   }
 }
