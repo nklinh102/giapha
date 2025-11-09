@@ -1,12 +1,14 @@
 // /functions/save-data.js
 
-// === SỬA LỖI: Thêm 'Node' vào 'self' ===
-import { DOMParser, Node } from '@xmldom/xmldom'; // Import thêm Node
+// === SỬA LỖI: Đổi thư viện polyfill ===
+import { DOMParser, Node } from 'xmldom'; // <-- ĐÃ THAY ĐỔI
 self.DOMParser = DOMParser;
-self.Node = Node; // Thêm dòng này
-// ======================================
+self.Node = Node;
+// ===================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+// ... (phần còn lại của file y hệt như trước) ...
 
 // ------------- Utilities -------------
 const JSON_HEADERS = {
