@@ -1,10 +1,22 @@
 // /functions/save-data.js
 
-// === SỬA LỖI: Đổi thư viện polyfill ===
-import { DOMParser, Node } from 'xmldom'; // <-- ĐÃ THAY ĐỔI
+// === SỬA LỖI: Polyfill cho các hằng số của Node ===
+import { DOMParser, Node } from 'xmldom';
 self.DOMParser = DOMParser;
 self.Node = Node;
-// ===================================
+
+// Thư viện AWS SDK cần các hằng số này, nhưng 'xmldom' không cung cấp
+// Chúng ta phải tự định nghĩa chúng
+if (!self.Node.TEXT_NODE) {
+  self.Node.TEXT_NODE = 3;
+}
+if (!self.Node.ELEMENT_NODE) {
+  self.Node.ELEMENT_NODE = 1;
+}
+if (!self.Node.COMMENT_NODE) {
+  self.Node.COMMENT_NODE = 8;
+}
+// ===========================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
