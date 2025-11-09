@@ -1,15 +1,14 @@
 // /functions/upload-media.js
 
-// === SỬA LỖI: Thêm 'Node' vào 'self' ===
-import { DOMParser, Node } from '@xmldom/xmldom'; // Import thêm Node
+// === SỬA LỖI: Đổi thư viện polyfill ===
+import { DOMParser, Node } from 'xmldom'; // <-- ĐÃ THAY ĐỔI
 self.DOMParser = DOMParser;
-self.Node = Node; // Thêm dòng này
-// ======================================
+self.Node = Node;
+// ===================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-// === SỬA LỖI BẢO MẬT: Thêm code xác thực Auth0 đầy đủ ===
-// (Copy từ file save-data.js)
+// ... (phần còn lại của file y hệt như trước, bao gồm cả code xác thực Auth0) ...
 
 // ------------- Base64 helpers (cho JWT) -------------
 function base64UrlToUint8Array(b64url) {
@@ -41,7 +40,11 @@ async function verifyAuth0JWT(token, env) {
   if (!h || !p || !s) throw new Error('Malformed JWT');
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(p)));
-  if (header.alg !== 'RS26') throw new Error('Unsupported alg');
+  
+  // === SỬA LỖI TYPO CỦA TÔI ===
+  if (header.alg !== 'RS256') throw new Error('Unsupported alg'); // <-- Đã sửa từ 'RS26'
+  // ==========================
+
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
   
@@ -81,8 +84,6 @@ async function isValidToken(request, env) {
     return false;
   }
 }
-// === KẾT THÚC SỬA LỖI BẢO MẬT ===
-
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -91,8 +92,6 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ message: "Xác thực thất bại." }), { status: 401 });
   }
 
-  // ENV cần có:
-  // R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL
   const s3 = new S3Client({
     region: "auto",
     endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
