@@ -1,4 +1,7 @@
 // /functions/upload-media.js
+import { DOMParser } from '@xmldom/xmldom';
+global.DOMParser = DOMParser;
+// ======================================
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { jwtVerify, createRemoteJWKSet } from "jose";
 
