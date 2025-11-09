@@ -100,6 +100,12 @@ async function parseJsonSafe(response, urlForMsg = '') {
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} khi gọi ${urlForMsg || '(unknown)'}:\n${text.slice(0, 200)}`);
   }
+  
+  // Sửa lỗi: Nếu file 404 trả về HTML (trang chủ), đây không phải JSON
+  if (ct.includes('text/html')) {
+     throw new Error(`HTTP ${response.status} (Not Found) khi gọi ${urlForMsg}. Nhận về HTML.`);
+  }
+  
   if (!ct.includes('application/json')) {
     throw new Error(`Kỳ vọng JSON nhưng nhận ${ct} từ ${urlForMsg || '(unknown)'}.\nĐoạn đầu: ${text.slice(0, 200)}`);
   }
@@ -121,7 +127,6 @@ async function fetchJSON(url) {
 // ===================================================================
 async function configureAuth0() {
   try {
-    // >>> SỬA: truyền audience vào authorizationParams
     auth0Client = await auth0.createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENT_ID,
@@ -151,7 +156,6 @@ async function configureAuth0() {
 
 async function handleLogin() {
   if (!auth0Client) return;
-  // >>> SỬA: đảm bảo audience khi login
   await auth0Client.loginWithRedirect({
     authorizationParams: { audience: AUTH0_AUDIENCE }
   });
@@ -208,7 +212,6 @@ async function callAdminFunction(functionName, payload, isFormData = false) {
   }
 
   try {
-    // >>> SỬA: xin token kèm audience để có "aud" đúng
     const token = await auth0Client.getTokenSilently({
       authorizationParams: { audience: AUTH0_AUDIENCE }
     });
@@ -253,6 +256,10 @@ function cleanDataForSave(node) {
 
 async function saveAllChanges() {
   // 1. Lấy settings từ UI
+  // === SỬA LỖI: Đảm bảo globalSettings.settings tồn tại ===
+  if (!globalSettings.settings) globalSettings.settings = {};
+  // ===================================================
+  
   globalSettings.settings.bg_url = $('#bgUrlInput').value.trim();
   globalSettings.settings.gap_x = parseInt($('#gapXSlider').value, 10);
   globalSettings.settings.tree_title = appTitle.textContent.trim();
@@ -310,21 +317,54 @@ async function uploadImageToR2(file) {
 }
 
 // ===================================================================
-// ====== TẢI DỮ LIỆU JSON ======
+// ====== TẢI DỮ LIỆU JSON (ĐÃ SỬA LỖI 404) ======
+// ===================================================================
 async function loadInitialData() {
   document.body.style.cursor = 'wait';
   try {
+    // Vẫn cố gắng tải file db.json
     globalSettings = await fetchJSON(DB_FILE_PATH);
+  } catch (e) {
+    // === SỬA LỖI BẮT ĐẦU ===
+    // Nếu gặp lỗi (ví dụ 404), chúng ta sẽ tạo một globalSettings mặc định
+    // để hàm saveAllChanges() có thể chạy mà không bị crash
+    alert('Không tìm thấy file db.json (lỗi 404). Sẽ tạo file mới. Vui lòng đăng nhập và bấm "Lưu Thay Đổi" để bắt đầu.');
+    console.warn("Không tìm thấy db.json (404), đang khởi tạo globalSettings mặc định.");
+    
+    globalSettings = {
+      settings: {
+        bg_url: "https://pub-680f37ef25704fc58bf37caad665e004.r2.dev/media/anhnen.jpg",
+        gap_x: 40,
+        tree_title: "Gia Phả (Mới)",
+        decoration_visible: true,
+        decoration_size: 150,
+        decoration_distance: 85,
+        decoration_url: "https://pub-680f37ef25704fc58bf37caad665e004.r2.dev/media/Cuonthu.png"
+      },
+      media: { images: [], audios: [] },
+      treeIndex: [
+        {
+          displayName: "Phả đồ Họ Nguyễn", // Tên mặc định
+          fileName: "tree-ho-nguyen.json"  // File mặc định
+        }
+      ]
+    };
+    // === SỬA LỖI KẾT THÚC ===
+    console.error(e); // Vẫn log lỗi cũ ra
+  } 
 
+  // Bây giờ chúng ta TÁCH phần code còn lại ra khỏi try...catch
+  // để nó luôn chạy, kể cả khi file db.json bị 404
+  try {
     const settings = globalSettings.settings || {};
     if (settings.bg_url) { canvasContainer.style.backgroundImage = `url(${settings.bg_url})`; $('#bgUrlInput').value = settings.bg_url; }
     gapX = parseInt(settings.gap_x, 10) || 40; $('#gapXSlider').value = gapX; $('#gapValueLabel').textContent = gapX;
     const centralTitle = settings.tree_title || 'Sơ Đồ Gia Phả';
     savedTitle = centralTitle; appTitle.textContent = centralTitle; document.title = centralTitle;
-    decorationSettings.visible   = String(settings.decoration_visible).toLowerCase() !== 'false';
-    decorationSettings.size      = parseInt(settings.decoration_size, 10) || 150;
-    decorationSettings.distance  = parseInt(settings.decoration_distance, 10) || 85;
-    decorationSettings.url       = settings.decoration_url || 'https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/images/Cuonthu.png';
+    decorationSettings.visible  = String(settings.decoration_visible).toLowerCase() !== 'false';
+    decorationSettings.size     = parseInt(settings.decoration_size, 10) || 150;
+    decorationSettings.distance = parseInt(settings.decoration_distance, 10) || 85;
+    decorationSettings.url      = settings.decoration_url || 'https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/images/Cuonthu.png';
     treeDecoration.src = decorationSettings.url;
     updateControlsUI();
 
@@ -335,7 +375,12 @@ async function loadInitialData() {
     populateAudioSidebar();
 
     treeIndex = globalSettings.treeIndex || [];
-    if (treeIndex.length === 0) throw new Error('Không tìm thấy cây phả đồ nào trong data/db.json');
+    if (treeIndex.length === 0) {
+      // Đảm bảo treeIndex luôn có ít nhất 1 phần tử
+      if (!globalSettings.treeIndex) globalSettings.treeIndex = [];
+      globalSettings.treeIndex.push({ displayName: "Phả đồ (Mới)", fileName: "tree-new.json" });
+      treeIndex = globalSettings.treeIndex;
+    }
 
     populateTreeSelector();
 
@@ -345,17 +390,21 @@ async function loadInitialData() {
 
     if (initialFileName) {
       treeSelector.value = initialFileName;
+      // Hàm loadTreeData cũng sẽ bị 404, nhưng nó đã tự xử lý 
+      // và tạo ra một "Gốc (Lỗi)" rỗng, như vậy là đúng.
       await loadTreeData(initialFileName);
     } else {
-      throw new Error('Không có cây phả đồ nào hợp lệ trong file db.json.');
+      throw new Error('Không có cây phả đồ nào hợp lệ.');
     }
-  } catch (e) {
-    alert('Không thể tải dữ liệu. Chi tiết: ' + e.message);
-    console.error(e);
-    data = null;
-    scheduleRender();
+    
+  } catch (e_layout) {
+      // Lỗi này xảy ra nếu code layout (bên ngoài try-catch đầu tiên) bị lỗi
+     alert('Lỗi khi tải dữ liệu. Chi tiết: ' + e_layout.message);
+     console.error("Lỗi layout:", e_layout);
+     data = null;
+     scheduleRender();
   } finally {
-    document.body.style.cursor = 'default';
+     document.body.style.cursor = 'default';
   }
 }
 
@@ -378,8 +427,15 @@ async function loadTreeData(fileName) {
     allProposals = Array.isArray(proposalData) ? proposalData : [];
   } catch (e) {
     console.error('Lỗi khi tải dữ liệu:', e);
-    alert('Không thể tải phả đồ hoặc đề xuất. Một số dữ liệu có thể bị lỗi.');
-    if (!data) data = { id: '1', name: 'Gốc (Lỗi)', children: [] };
+    
+    // === SỬA LỖI: Chỉ báo lỗi 404 lần đầu, không spam alert ===
+    if (!globalSettings.settings) { // Chỉ báo lỗi nếu đây là lần tải đầu tiên (globalSettings rỗng)
+      alert('Không thể tải phả đồ hoặc đề xuất. Có thể file chưa được tạo.');
+    } else {
+      console.warn('Không tìm thấy file tree hoặc proposals, sẽ tạo file trống.');
+    }
+    
+    if (!data) data = { id: '1', name: 'Gốc (Trống)', children: [] };
     allProposals = [];
   } finally {
     applyProposalsToTree();
@@ -1025,6 +1081,7 @@ function getCoordsFromEvent(e) {
 function getNodeAtPoint(worldX, worldY) {
   let found = null;
   (function check(node) {
+    if (!node) return;
     const x1 = node._x - node._w/2; const y1 = node._y - node._h/2;
     const x2 = node._x + node._w/2; const y2 = node._y + node._h/2;
     if (worldX >= x1 && worldX <= x2 && worldY >= y1 && worldY <= y2) found = node;
@@ -1155,6 +1212,7 @@ function generateSVGString() {
   if (!data) return null; updateLayout();
   const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   (function findBounds(n) {
+    if (!n) return;
     bb.minX = Math.min(bb.minX, n._x - n._w/2); bb.maxX = Math.max(bb.maxX, n._x + n._w/2);
     bb.minY = Math.min(bb.minY, n._y - n._h/2); bb.maxY = Math.max(bb.maxY, n._y + n._h/2);
     (n.children || []).forEach(findBounds);
@@ -1162,6 +1220,7 @@ function generateSVGString() {
   const pad = 40; const w = bb.maxX - bb.minX + pad * 2; const h = bb.maxY - bb.minY + pad * 2;
   let paths = '', nodesSVG = '';
   (function buildContent(n) {
+    if (!n) return;
     if (n.isProposal) return;
     (n.children || []).forEach(c => {
       const x1 = n._x, y1 = n._y + n._h/2, x2 = c._x, y2 = c._y - c._h/2, midY = (y1 + y2) / 2;
@@ -1200,23 +1259,15 @@ async function convertSVGtoJPG(svgString, quality = 0.9) {
   c2d.drawImage(img, 0, 0);
   return canvas.toDataURL('image/jpeg', quality);
 }
-$('#btnExportSVG').onclick = () => {
-  const svgString = generateSVGString();
-  if (svgString) download('gia-pha.svg', svgString, 'image/svg+xml'); else alert('Chưa có dữ liệu.');
+$('#btnExportCSV').onclick = () => { if (!data) return alert('Chưa có dữ liệu'); download('gia-pha.csv', '\uFEFF' + toCSV(), 'text/csv;charset=utf-8'); };
+$('#btnImportCSV').onclick = () => { if (!isOwner) return; $('#fileImportCSV').click(); };
+$('#fileImportCSV').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const text = await f.text(); pushHistory(); data = fromCSV(text); setUnsavedChanges(true); updateLayout(); scheduleRender(); }
+  catch(err) { alert('Lỗi khi đọc file CSV/Excel: ' + err.message); console.error(err); }
+  finally { e.target.value = ''; }
 };
-$('#btnExportJPG').onclick = async () => {
-  const btn = $('#btnExportJPG'); btn.disabled = true; btn.textContent = 'Đang xử lý...';
-  try {
-    const svgString = generateSVGString(); if (!svgString) { alert('Chưa có dữ liệu để xuất.'); return; }
-    const jpgDataUrl = await convertSVGtoJPG(svgString);
-    download('gia-pha.jpg', jpgDataUrl);
-  } catch (err) {
-    console.error('Lỗi chuyển đổi SVG sang JPG:', err);
-    alert('Đã xảy ra lỗi khi chuyển đổi file.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Xuất JPG';
-  }
-};
+
 $('#btnReset').onclick = () => { if (!isOwner) return; openConfirm('Xóa toàn bộ dữ liệu?', () => { pushHistory(); data = null; highlightedNodeId = null; updateSelectionActions(); setUnsavedChanges(true); updateLayout(); scheduleRender(); }); };
 $('#btnRoot').onclick = () => { if (!isOwner) return; if (data) return alert('Cây đã có gốc.'); pushHistory(); data = { id: generateHierarchicalId(null), name: 'Tổ tiên', birth: '1900', children: [] }; setUnsavedChanges(true); updateLayout(); scheduleRender(); };
 $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
@@ -1341,7 +1392,7 @@ function showMedia(type, index) {
     img.style.maxHeight = '80vh'; img.style.maxWidth = '100%'; img.style.objectFit = 'contain';
     const nav = document.createElement('div'); nav.id = 'gallery-nav'; nav.innerHTML = `<button id="gallery-prev">&lt;</button><button id="gallery-next">&gt;</button>`;
     mediaContent.innerHTML = ''; mediaContent.append(img, nav);
-    $('#gallery-prev').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex - 1) % allImages.length; if (currentImageIndex < 0) currentImageIndex += allImages.length; updateImageViewer(); };
+    $('#gallery-prev').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length; updateImageViewer(); };
     $('#gallery-next').onclick = (e) => { e.stopPropagation(); currentImageIndex = (currentImageIndex + 1) % allImages.length; updateImageViewer(); };
     img.onerror = () => { mediaContent.innerHTML = `<div style="padding: 2rem; color: var(--danger);">Không thể tải hình ảnh.</div>`; };
     img.src = item.url; $('#media-title').textContent = item.name;
