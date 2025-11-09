@@ -1,6 +1,45 @@
 // /functions/submit-proposal.js
 import { Octokit } from "@octokit/rest";
 
+// ------------- Helpers (Sửa lỗi Unicode UTF-8) -------------
+
+/**
+ * Mã hóa một chuỗi JavaScript (UTF-8) sang Base64
+ * để an toàn khi dùng với btoa() và API của GitHub.
+ */
+function toBase64Utf8(str) {
+  try {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (const b of bytes) {
+      bin += String.fromCharCode(b);
+    }
+    return btoa(bin);
+  } catch (e) {
+    console.error("Lỗi toBase64Utf8:", e);
+    return null; 
+  }
+}
+
+/**
+ * Giải mã một chuỗi Base64 (từ GitHub) sang chuỗi UTF-8.
+ */
+function fromBase64Utf8(b64) {
+  try {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+      bytes[i] = bin.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+  } catch (e) {
+    console.error("Lỗi fromBase64Utf8:", e);
+    return null;
+  }
+}
+// --------------------------------------------------
+
+
 // Hàm này sẽ chạy trên Cloudflare
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -45,17 +84,31 @@ export async function onRequestPost(context) {
         owner: GITHUB_USER, repo: GITHUB_REPO, path: PROPOSALS_FILE_PATH, ref: GIT_BRANCH,
       });
       currentSha = fileData.sha;
-      // Dùng btoa/atob thay vì Buffer (Buffer không có sẵn trong Workers)
-      const content = atob(fileData.content); 
-      proposals = JSON.parse(content);
+      
+      // SỬA LỖI ĐỌC: Dùng fromBase64Utf8 để đảm bảo đọc đúng Tiếng Việt
+      const content = fromBase64Utf8(fileData.content); 
+      if (content) {
+        proposals = JSON.parse(content);
+      } else {
+        throw new Error("Không thể đọc nội dung file proposals.json");
+      }
+      
     } catch (e) {
       if (e.status !== 404) throw e;
       // File không tồn tại, sẽ tạo mới
+      console.log("proposals.json không tìm thấy, sẽ tạo file mới.");
     }
 
     // 5. Thêm đề xuất mới và ghi đè
     proposals.push(newProposal);
-    const contentBase64 = btoa(JSON.stringify(proposals, null, 2)); // Dùng btoa
+    
+    // SỬA LỖI GHI: Dùng toBase64Utf8 để mã hóa đúng Tiếng Việt
+    const dataStr = JSON.stringify(proposals, null, 2);
+    const contentBase64 = toBase64Utf8(dataStr);
+
+    if (!contentBase64) {
+      throw new Error("Không thể mã hóa nội dung đề xuất.");
+    }
 
     await octokit.repos.createOrUpdateFileContents({
       owner: GITHUB_USER, repo: GITHUB_REPO, path: PROPOSALS_FILE_PATH, branch: GIT_BRANCH,
