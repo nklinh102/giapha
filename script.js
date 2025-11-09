@@ -1326,7 +1326,7 @@ code_part
 }
 function showMedia(type, index) {
   if (type !== 'image' || allImages.length === 0) return; currentImageIndex = index;
-  const mediaViewer = $('#media-viewer'); const mediaContent = $('#media-content']);
+  const mediaViewer = $('#media-viewer'); const mediaContent = $('#media-content');
   function updateImageViewer() {
     const item = allImages[currentImageIndex]; const img = document.createElement('img');
     img.style.maxHeight = '80vh'; img.style.maxWidth = '100%'; img.style.objectFit = 'contain';
