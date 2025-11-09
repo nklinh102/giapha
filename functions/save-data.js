@@ -1,9 +1,10 @@
 // /functions/save-data.js
 
-// === SỬA LỖI: Thay 'global' bằng 'self' cho Cloudflare ===
-import { DOMParser } from '@xmldom/xmldom';
+// === SỬA LỖI: Thêm 'Node' vào 'self' ===
+import { DOMParser, Node } from '@xmldom/xmldom'; // Import thêm Node
 self.DOMParser = DOMParser;
-// ======================================================
+self.Node = Node; // Thêm dòng này
+// ======================================
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
