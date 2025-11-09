@@ -1,7 +1,10 @@
 // /functions/save-data.js
+
+// === SỬA LỖI: Thay 'global' bằng 'self' cho Cloudflare ===
 import { DOMParser } from '@xmldom/xmldom';
-global.DOMParser = DOMParser;
-// ======================================
+self.DOMParser = DOMParser;
+// ======================================================
+
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 // ------------- Utilities -------------
@@ -41,7 +44,6 @@ let _jwksCache = null;
 let _jwksCacheAt = 0;
 
 async function fetchJWKS(issuer) {
-  // (Giữ nguyên logic fetchJWKS của bạn...)
   const now = Date.now();
   if (_jwksCache && now - _jwksCacheAt < 5 * 60 * 1000) return _jwksCache;
   const url = `${issuer}.well-known/jwks.json`;
@@ -53,7 +55,6 @@ async function fetchJWKS(issuer) {
 }
 
 async function verifyAuth0JWT(token, env) {
-  // (Giữ nguyên toàn bộ logic verifyAuth0JWT của bạn...)
   const [h, p, s] = token.split('.');
   if (!h || !p || !s) throw new Error('Malformed JWT');
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
@@ -61,10 +62,13 @@ async function verifyAuth0JWT(token, env) {
   if (header.alg !== 'RS256') throw new Error('Unsupported alg');
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
+  
+  // Kiểm tra Audience (Quan trọng)
   const aud = payload.aud;
   const wantAud = env.AUTH0_AUDIENCE;
   const okAud = Array.isArray(aud) ? aud.includes(wantAud) : aud === wantAud;
   if (!okAud) throw new Error('Bad audience');
+
   const nowSec = Math.floor(Date.now() / 1000);
   if (typeof payload.exp === 'number' && nowSec > payload.exp + 60) {
     throw new Error('Token expired');
@@ -84,12 +88,11 @@ async function verifyAuth0JWT(token, env) {
 }
 
 async function isValidToken(request, env) {
-  // (Giữ nguyên logic isValidToken của bạn...)
   try {
     const auth = request.headers.get('authorization') || request.headers.get('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) return false;
     const token = auth.slice(7);
-    await verifyAuth0JWT(token, env);
+    await verifyAuth0JWT(token, env); // Dùng hàm xác thực đầy đủ
     return true;
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -97,14 +100,14 @@ async function isValidToken(request, env) {
   }
 }
 
-// ------------- Handler (Đã cập nhật) -------------
+// ------------- Handler -------------
 export async function onRequestPost({ request, env }) {
-  // 1. Auth (Giữ nguyên)
+  // 1. Auth
   if (!(await isValidToken(request, env))) {
     return json({ message: 'Xác thực thất bại.' }, 401);
   }
 
-  // 2. Parse body (Giữ nguyên)
+  // 2. Parse body
   let payload;
   try {
     payload = await request.json();
@@ -115,7 +118,7 @@ export async function onRequestPost({ request, env }) {
     return json({ message: 'Dữ liệu gửi lên không hợp lệ.' }, 400);
   }
 
-  // 3. Khởi tạo S3/R2 Client (Mới)
+  // 3. Khởi tạo S3/R2 Client
   const s3 = new S3Client({
     region: "auto",
     endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -125,18 +128,18 @@ export async function onRequestPost({ request, env }) {
     },
   });
 
-  // 4. Chuẩn bị file JSON (Mới)
+  // 4. Chuẩn bị file JSON
   const filePath = String(payload.filePath);
   const dataStr = JSON.stringify(payload.data, null, 2);
 
-  // 5. Lưu file lên R2 (Thay thế GitHub)
+  // 5. Lưu file lên R2
   try {
     await s3.send(new PutObjectCommand({
       Bucket: env.R2_BUCKET,
       Key: filePath, // ví dụ: "data/db.json" hoặc "data/proposals.json"
       Body: dataStr,
       ContentType: "application/json; charset=utf-8",
-      ACL: "public-read" // Quan trọng: Để client (script.js) có thể đọc
+      ACL: "public-read" 
     }));
 
     return json({ message: `Đã lưu ${filePath} thành công!` }, 200);
