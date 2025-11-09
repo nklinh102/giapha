@@ -1437,8 +1437,8 @@ function init() {
   $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true));
   $('#appTitle').addEventListener('blur', () => { if (isOwner) setUnsavedChanges(true); });
 
-  const decorationSizeSlider = $('#decorationSizeSlider'), decorationSizeLabel = $('#decorationSizeLabel'];
-  const decorationDistanceSlider = $('#decorationDistanceSlider'), decorationDistanceLabel = $('#decorationDistanceLabel'];
+  const decorationSizeSlider = $('#decorationSizeSlider'), decorationSizeLabel = $('#decorationSizeLabel');
+  const decorationDistanceSlider = $('#decorationDistanceSlider'), decorationDistanceLabel = $('#decorationDistanceLabel');
   updateControlsUI();
   $('#toggleDecoration').onchange = (e) => { decorationSettings.visible = e.target.checked; setUnsavedChanges(true); scheduleRender(); };
   decorationSizeSlider.addEventListener('input', (e) => { decorationSettings.size = parseInt(e.target.value, 10); decorationSizeLabel.textContent = decorationSettings.size; setUnsavedChanges(true); scheduleRender(); });
