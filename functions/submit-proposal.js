@@ -1,4 +1,7 @@
 // /functions/submit-proposal.js
+import { DOMParser } from '@xmldom/xmldom';
+global.DOMParser = DOMParser;
+// ======================================
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const PROPOSALS_FILE_PATH = "data/proposals.json";
