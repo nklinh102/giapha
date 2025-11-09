@@ -1,10 +1,10 @@
 // /functions/submit-proposal.js
 
-// === SỬA LỖI: Thêm 'Node' vào 'self' ===
-import { DOMParser, Node } from '@xmldom/xmldom'; // Import thêm Node
+// === SỬA LỖI: Đổi thư viện polyfill ===
+import { DOMParser, Node } from 'xmldom'; // <-- ĐÃ THAY ĐỔI
 self.DOMParser = DOMParser;
-self.Node = Node; // Thêm dòng này
-// ======================================
+self.Node = Node;
+// ===================================
 
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
