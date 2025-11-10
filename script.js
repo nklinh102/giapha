@@ -1046,7 +1046,7 @@ async function onAcceptProposal(node) {
 async function onRejectProposal(node) {
   pushHistory();
 
-  // Bỏ khỏi allProposals
+  // Bỏ khỏi mảng allProposals
   const proposalIndex = allProposals.findIndex(p => p.proposalId === node.id);
   if (proposalIndex > -1) allProposals.splice(proposalIndex, 1);
 
