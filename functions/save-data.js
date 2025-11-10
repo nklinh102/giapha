@@ -1,22 +1,7 @@
 // /functions/save-data.js
+// KHÔNG CẦN IMPORT AWS-SDK HAY XMLDOM NỮA
 
-// === SỬA LỖI: Polyfill cho DOMParser và TỰ TẠO Node constants ===
-import { DOMParser } from 'xmldom';
-self.DOMParser = DOMParser;
-
-// Tự tạo đối tượng Node và các hằng số mà AWS SDK cần
-// vì môi trường Worker không có sẵn.
-if (typeof self.Node === 'undefined') {
-  self.Node = {
-    TEXT_NODE: 3,
-    ELEMENT_NODE: 1,
-    COMMENT_NODE: 8
-  };
-}
-// ========================================================
-
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
+// (Code xác thực Auth0 và các hàm helpers giữ nguyên)
 // ------------- Utilities -------------
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
@@ -72,13 +57,10 @@ async function verifyAuth0JWT(token, env) {
   if (header.alg !== 'RS256') throw new Error('Unsupported alg');
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
-  
-  // Kiểm tra Audience (Quan trọng)
   const aud = payload.aud;
   const wantAud = env.AUTH0_AUDIENCE;
   const okAud = Array.isArray(aud) ? aud.includes(wantAud) : aud === wantAud;
   if (!okAud) throw new Error('Bad audience');
-
   const nowSec = Math.floor(Date.now() / 1000);
   if (typeof payload.exp === 'number' && nowSec > payload.exp + 60) {
     throw new Error('Token expired');
@@ -102,7 +84,7 @@ async function isValidToken(request, env) {
     const auth = request.headers.get('authorization') || request.headers.get('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) return false;
     const token = auth.slice(7);
-    await verifyAuth0JWT(token, env); // Dùng hàm xác thực đầy đủ
+    await verifyAuth0JWT(token, env);
     return true;
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -110,7 +92,7 @@ async function isValidToken(request, env) {
   }
 }
 
-// ------------- Handler -------------
+// ------------- Handler (ĐÃ SỬA DÙNG R2 BINDING) -------------
 export async function onRequestPost({ request, env }) {
   // 1. Auth
   if (!(await isValidToken(request, env))) {
@@ -128,29 +110,15 @@ export async function onRequestPost({ request, env }) {
     return json({ message: 'Dữ liệu gửi lên không hợp lệ.' }, 400);
   }
 
-  // 3. Khởi tạo S3/R2 Client
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    },
-  });
-
-  // 4. Chuẩn bị file JSON
+  // 3. Chuẩn bị file JSON
   const filePath = String(payload.filePath);
   const dataStr = JSON.stringify(payload.data, null, 2);
 
-  // 5. Lưu file lên R2
+  // 4. Lưu file lên R2 (Dùng binding `env.GIAPHA_BUCKET`)
   try {
-    await s3.send(new PutObjectCommand({
-      Bucket: env.R2_BUCKET,
-      Key: filePath, // ví dụ: "data/db.json" hoặc "data/proposals.json"
-      Body: dataStr,
-      ContentType: "application/json; charset=utf-8",
-      ACL: "public-read" 
-    }));
+    await env.GIAPHA_BUCKET.put(filePath, dataStr, {
+      httpMetadata: { contentType: 'application/json; charset=utf-8' },
+    });
 
     return json({ message: `Đã lưu ${filePath} thành công!` }, 200);
   } catch (error) {
