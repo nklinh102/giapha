@@ -677,3 +677,39 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   box-shadow: 0 4px 12px rgba(from var(--success) r g b / 0.4);
 }
 /* (SỬA LỖI: Đã xóa dấu '}' thừa ở đây) */
+/* CSS cho nút Xóa Media */
+.gallery-item, .playlist-item {
+  position: relative;
+}
+
+.delete-media-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(239, 68, 68, 0.8); /* Màu đỏ */
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  display: none; /* Mặc định ẩn */
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.delete-media-btn:hover {
+  background-color: rgba(220, 38, 38, 1); /* Đỏ đậm hơn */
+  opacity: 1;
+}
+
+/* Chỉ hiện nút Xóa khi Admin đăng nhập */
+.owner-mode .delete-media-btn {
+  display: flex;
+}
