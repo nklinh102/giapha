@@ -368,9 +368,11 @@ async function loadInitialData() {
     treeDecoration.src = decorationSettings.url;
     updateControlsUI();
 
-    const media = globalSettings.media || {};
-    allImages = media.images || [];
-    allAudios = media.audios || [];
+    // === SỬA LỖI: Đảm bảo media luôn là object ===
+    if (!globalSettings.media) globalSettings.media = { images: [], audios: [] };
+    // ===========================================
+    allImages = globalSettings.media.images || [];
+    allAudios = globalSettings.media.audios || [];
     populateImageSidebar();
     populateAudioSidebar();
 
@@ -1342,24 +1344,117 @@ $('#zoomReset').onclick = () => { scale = 1; panX = 80; panY = 60; $('#zoomReset
 function populateTreeSelector() {
   treeSelector.innerHTML = treeIndex.map(tree => `<option value="${tree.fileName}">${tree.displayName}</option>`).join('');
 }
+
+// ===================================================================
+// ====== ===== CHỨC NĂNG MỚI: XÓA MEDIA ===== ======
+// ===================================================================
+async function handleMediaDelete(mediaType, index) {
+  if (!isOwner) {
+    alert('Bạn không có quyền.');
+    return;
+  }
+
+  // Lấy thông tin item để hiện tên xác nhận
+  const item = (mediaType === 'image') 
+    ? globalSettings.media.images[index] 
+    : globalSettings.media.audios[index];
+
+  if (!item) return;
+
+  // 1. Xác nhận
+  openConfirm(`Bạn có chắc muốn xóa media: "${item.name}"? Thao tác này sẽ cập nhật ngay lập tức.`, async () => {
+    try {
+      // 2. Xóa item khỏi mảng trong bộ nhớ
+      if (mediaType === 'image') {
+        globalSettings.media.images.splice(index, 1);
+      } else {
+        globalSettings.media.audios.splice(index, 1);
+      }
+
+      // 3. Lưu file db.json mới lên R2
+      const settingsPayload = { filePath: 'data/db.json', data: globalSettings };
+      const { success } = await callAdminFunction('save-data', settingsPayload);
+
+      if (!success) {
+        throw new Error('Lỗi khi lưu db.json sau khi xóa.');
+      }
+
+      // 4. Cập nhật lại UI
+      alert(`Đã xóa "${item.name}" thành công.`);
+      if (mediaType === 'image') {
+        populateImageSidebar();
+      } else {
+        populateAudioSidebar();
+      }
+
+    } catch (err) {
+      console.error('Lỗi khi xóa media:', err);
+      alert('Đã xảy ra lỗi khi xóa: ' + err.message);
+      // (Nếu lỗi thì tải lại toàn bộ data cho chắc)
+      loadInitialData(); 
+    }
+  });
+}
+
+// === CẬP NHẬT HÀM NÀY (ĐÃ THÊM NÚT XÓA) ===
 function populateImageSidebar() {
   const imageGallery = $('#media-image-gallery'); imageGallery.innerHTML = '';
   if (allImages.length > 0) {
     allImages.forEach((item, index) => {
       const galleryDiv = document.createElement('div'); galleryDiv.className = 'gallery-item'; galleryDiv.title = item.name;
-      galleryDiv.innerHTML = `<img src="${item.url}" loading="lazy" alt="${item.name}">`;
-      galleryDiv.onclick = () => showMedia('image', index); imageGallery.appendChild(galleryDiv);
+      
+      let deleteBtnHtml = '';
+      if (isOwner) {
+        deleteBtnHtml = `<button class='delete-media-btn' title='Xóa media này'>&times;</button>`;
+      }
+      
+      galleryDiv.innerHTML = `
+        <img src="${item.url}" loading="lazy" alt="${item.name}">
+        ${deleteBtnHtml}
+      `;
+
+      galleryDiv.onclick = (e) => {
+        // Ngăn click vào nút Xóa cũng mở ảnh
+        if (e.target.classList.contains('delete-media-btn')) {
+          e.stopPropagation();
+          handleMediaDelete('image', index);
+          return;
+        }
+        showMedia('image', index);
+      };
+      imageGallery.appendChild(galleryDiv);
     });
   } else { imageGallery.innerHTML = '<div class="sub">Chưa có hình ảnh nào.</div>'; }
 }
+
+// === CẬP NHẬT HÀM NÀY (ĐÃ THÊM NÚT XÓA) ===
 function populateAudioSidebar() {
   const audioPlaylist = $('#media-audio-playlist'); const globalAudioPlayer = $('#global-audio-player'); audioPlaylist.innerHTML = '';
   if (allAudios.length > 0) {
     allAudios.forEach((item, index) => {
       const listItem = document.createElement('li'); listItem.className = 'playlist-item'; listItem.title = item.name; listItem.dataset.index = index;
-      listItem.innerHTML = `<div class="progress-bar"></div><span class="play-icon">▶</span> <span class="track-name">${item.name}</span>`;
+      
+      let deleteBtnHtml = '';
+      if (isOwner) {
+        deleteBtnHtml = `<button class='delete-media-btn' title='Xóa media này'>&times;</button>`;
+      }
+      
+      listItem.innerHTML = `
+        <div class="progress-bar"></div>
+        <span class="play-icon">▶</span> 
+        <span class="track-name">${item.name}</span>
+        ${deleteBtnHtml}
+      `;
+      
       listItem.addEventListener('click', (e) => {
         e.stopPropagation();
+        
+        // Xử lý click nút Xóa
+        if (e.target.classList.contains('delete-media-btn')) {
+          handleMediaDelete('audio', index);
+          return;
+        }
+
         const clickedItem = e.currentTarget; const directAudioUrl = item.url;
         if (e.target.matches('.play-icon, .track-name')) {
           const wasPlaying = clickedItem.classList.contains('playing');
@@ -1384,6 +1479,10 @@ function populateAudioSidebar() {
     });
   } else { audioPlaylist.innerHTML = '<div class="sub">Chưa có âm thanh nào.</div>'; }
 }
+// ===================================================================
+// ===================================================================
+
+
 function showMedia(type, index) {
   if (type !== 'image' || allImages.length === 0) return; currentImageIndex = index;
   const mediaViewer = $('#media-viewer'); const mediaContent = $('#media-content');
@@ -1583,7 +1682,7 @@ function init() {
   hammer.on('pinchstart', () => { startScale = scale; });
   hammer.on('pinchmove', (e) => {
     const newScale = clamp(startScale * e.scale, 0.1, 5);
-    const rect = treeCanvas.getBoundingClientRect();
+    const rect = canvasContainer.getBoundingClientRect();
     const pX = e.center.x - rect.left, pY = e.center.y - rect.top;
     const wX = (pX - panX) / scale, wY = (pY - panY) / scale;
     panX = pX - wX * newScale; panY = pY - wY * newScale; scale = newScale;
