@@ -11,6 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "jose": "^6.1.0"
+    "@aws-sdk/client-s3": "^3.927.0",
+    "jose": "^6.1.0",
+    "xmldom": "^0.6.0"
   }
 }
