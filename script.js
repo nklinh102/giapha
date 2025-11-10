@@ -84,6 +84,16 @@ const treeSelector = $('#tree-selector');
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const norm = s => (s||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
 
+// === THÊM MỚI: Hàm helper tạo tên file an toàn ===
+function slugify(text) {
+  return text.toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Xóa dấu
+    .replace(/\s+/g, '-') // Thay khoảng trắng bằng -
+    .replace(/[^a-z0-9-]/g, '') // Xóa ký tự đặc biệt
+    .replace(/-+/g, '-') // Xóa các dấu - thừa
+    .replace(/^-+|-+$/g, ''); // Xóa dấu - ở đầu/cuối
+}
+
 function setUnsavedChanges(isDirty) {
   hasUnsavedChanges = isDirty;
   const saveBtn = $('#btnSaveChanges');
@@ -1622,6 +1632,87 @@ async function handleMediaUpload(mediaType) {
   }
 }
 
+// ===================================================================
+// ====== HÀM MỚI ĐỂ TẠO PHẢ ĐỒ MỚI ======
+// ===================================================================
+async function handleCreateNewTree() {
+  const nameInput = $('#newTreeNameInput');
+  const displayName = nameInput.value.trim();
+  
+  if (!displayName) {
+    alert('Vui lòng nhập tên phả đồ.');
+    nameInput.focus();
+    return;
+  }
+
+  // 1. Tạo tên file mới
+  const newFileName = `tree-${slugify(displayName)}.json`;
+  
+  // 2. Kiểm tra trùng lặp
+  if (globalSettings.treeIndex.find(t => t.fileName === newFileName)) {
+    alert('Tên phả đồ này đã tồn tại (tạo ra tên file bị trùng). Vui lòng chọn tên khác.');
+    return;
+  }
+
+  if (!confirm(`Bạn có chắc muốn tạo cây mới với tên file:\n${newFileName}`)) {
+    return;
+  }
+
+  const btn = $('#btnCreateNewTree');
+  btn.disabled = true;
+  btn.textContent = 'Đang tạo file...';
+
+  try {
+    // 3. Tạo file cây mới (rỗng)
+    const newTreeData = { id: '1', name: displayName, children: [] };
+    const treePayload = { filePath: `data/${newFileName}`, data: newTreeData };
+    
+    // Gọi hàm save-data để tạo file JSON mới trên R2
+    const treeResult = await callAdminFunction('save-data', treePayload);
+
+    if (!treeResult.success) {
+      throw new Error('Lỗi khi tạo file cây mới: ' + (treeResult.error || ''));
+    }
+
+    btn.textContent = 'Đang cập nhật danh sách...';
+
+    // 4. Cập nhật file db.json (treeIndex) trong BỘ NHỚ
+    if (!globalSettings.treeIndex) globalSettings.treeIndex = [];
+    globalSettings.treeIndex.push({
+      displayName: displayName,
+      fileName: newFileName
+    });
+    
+    // 5. Cập nhật file db.json trên R2
+    const settingsPayload = { filePath: 'data/db.json', data: globalSettings };
+    const settingsResult = await callAdminFunction('save-data', settingsPayload);
+
+    if (!settingsResult.success) {
+      throw new Error('Đã tạo file cây, nhưng lỗi khi cập nhật db.json: ' + (settingsResult.error || ''));
+    }
+
+    // 6. Thành công! Cập nhật UI
+    alert(`Đã tạo phả đồ "${displayName}" thành công!`);
+    nameInput.value = '';
+    
+    // Tải lại <select>
+    populateTreeSelector();
+    
+    // Tự động chuyển sang cây mới
+    treeSelector.value = newFileName;
+    await loadTreeData(newFileName); // Tải cây mới (rỗng)
+
+  } catch (err) {
+    console.error('Lỗi khi tạo cây mới:', err);
+    alert('Đã xảy ra lỗi: ' + err.message);
+    // Nếu lỗi, tải lại db.json gốc để đảm bảo globalSettings không bị sai
+    fetchJSON(DB_FILE_PATH).then(db => globalSettings = db);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Tạo Phả Đồ Mới';
+  }
+}
+
 
 function init() {
   // 1) Gắn sự kiện UI
@@ -1714,6 +1805,7 @@ function init() {
   // === THÊM SỰ KIỆN CHO NÚT MỚI ===
   $('#btnUploadImage').onclick = () => handleMediaUpload('image');
   $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
+  $('#btnCreateNewTree').onclick = handleCreateNewTree; // <-- THÊM DÒNG NÀY
   // ==============================
 
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
