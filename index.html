@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sơ Đồ Gia Phả</title>
     
-    <!-- Sửa lại -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,7 +97,28 @@
             <label>Thống kê theo đời</label>
             <div id='stats-content'></div>
           </div>
-        </div>
+
+          <div class='field owner-only-field' id='media-manager' style='padding: 0 12px;'>
+            <label style='font-weight: bold; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
+              Quản lý Media
+            </label>
+            
+            <div class='field'>
+              <label>Tên hiển thị (VD: Ảnh Tết 2025)</label>
+              <input id='mediaNameInput' placeholder='Nhập tên cho ảnh/audio...'>
+            </div>
+          
+            <div class='field'>
+              <label>Chọn file để tải lên</label>
+              <input type="file" id="mediaFileInput" accept="image/*, audio/*">
+            </div>
+            
+            <div class='btn-group' style='gap: 8px;'>
+              <button class='btn' id='btnUploadImage' style='flex:1;'>Tải lên Ảnh</button>
+              <button class='btn' id='btnUploadAudio' style='flex:1;'>Tải lên Audio</button>
+            </div>
+          </div>
+          </div>
         <div class='hint'>
           <b>Thiết kế:</b> Nguyễn Khánh Linh - 0985934677
         </div>
@@ -265,4 +285,3 @@
 </body>
 
 </html>
-
