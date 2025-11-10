@@ -1146,23 +1146,10 @@ function getGiap(node) {
 }
 
 // ===================================================================
-// ====== IMPORT/EXPORT ======
-function download(filename, data, type) {
-  const a = document.createElement('a');
-  let url;
-  if (typeof data === 'string' && (data.startsWith('data:') || data.startsWith('blob:'))) {
-    url = data;
-  } else {
-    const blob = new Blob([data], { type: type || 'application/octet-stream' });
-    url = URL.createObjectURL(blob);
-  }
-  a.href = url; a.download = filename; document.body.appendChild(a);
-  a.click();
-  if (typeof url !== 'string' || !url.startsWith('data:')) {
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-  }
-  document.body.removeChild(a);
-}
+// ====== IMPORT/EXPORT (ĐÃ SỬA LỖI TẢI FILE) ======
+// ===================================================================
+// (Hàm download() cũ đã bị xóa)
+
 function toCSV() {
   if(!data) return '';
   const rows = [['id','parentId','name','birth','death','note','avatarUrl']];
@@ -1211,17 +1198,19 @@ function fromCSV(text) {
   return root;
 }
 
-$('#btnExportCSV').onclick = () => { if (!data) return alert('Chưa có dữ liệu'); download('gia-pha.csv', '\uFEFF' + toCSV(), 'text/csv;charset=utf-8'); };
-$('#btnImportCSV').onclick = () => { if (!isOwner) return; $('#fileImportCSV').click(); };
-$('#fileImportCSV').onchange = async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  try { const text = await f.text(); pushHistory(); data = fromCSV(text); setUnsavedChanges(true); updateLayout(); scheduleRender(); }
-  catch(err) { alert('Lỗi khi đọc file CSV/Excel: ' + err.message); console.error(err); }
-  finally { e.target.value = ''; }
-};
-
+// === SỬA HÀM NÀY (Hardcode màu) ===
 function generateSVGString() {
   if (!data) return null; updateLayout();
+  
+  // Lấy giá trị màu thực tế (hardcode)
+  const colors = {
+    card: getCssVar('--card'),
+    border: getCssVar('--border'),
+    ink: getCssVar('--ink'),
+    muted: getCssVar('--muted'),
+    line: 'rgba(138,160,181,.7)' // Giá trị này đã được hardcode
+  };
+
   const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   (function findBounds(n) {
     if (!n) return;
@@ -1235,49 +1224,176 @@ function generateSVGString() {
     if (!n) return;
     if (n.isProposal) return;
     (n.children || []).forEach(c => {
+      if (c.isProposal) return; // Bỏ qua đường kẻ đến node đề xuất
       const x1 = n._x, y1 = n._y + n._h/2, x2 = c._x, y2 = c._y - c._h/2, midY = (y1 + y2) / 2;
       paths += `<path d="M ${x1} ${y1} V ${midY} H ${x2} V ${y2}" />`;
     });
     const name = (n.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const meta = [n.birth||'', n.death?('– '+n.death):''].join(' ').trim();
     nodesSVG += `<rect x="${n._x - n._w/2}" y="${n._y - n._h/2}" width="${n._w}" height="${n._h}" rx="14" ry="14" />`;
+    
     if (n.depth >= VERTICAL_THRESHOLD) {
       nodesSVG += `<text transform="translate(${n._x}, ${n._y}) rotate(90)" text-anchor="middle" dominant-baseline="central" class="name">${name}</text>`;
       nodesSVG += `<text x="${n._x}" y="${n._y + n._h/2 - 15}" text-anchor="middle" class="meta">${meta}</text>`;
     } else {
-      nodesSVG += `<text x="${n._x}" y="${n._y - 5}" text-anchor="middle" class="name">${name}</text>`;
-      nodesSVG += `<text x="${n._x}" y="${n._y + 15}" text-anchor="middle" class="meta">${meta}</text>`;
+      // Sửa lỗi: Căn chỉnh text cho Gen 1 & 2
+      if (n.depth === 0 || n.depth === 1) {
+         nodesSVG += `<text x="${n._x}" y="${n._y - 5}" text-anchor="middle" class="name" style="fill: #c0392b;">${name}</text>`; // Tô màu đỏ
+         nodesSVG += `<text x="${n._x}" y="${n._y + 15}" text-anchor="middle" class="meta" style="fill: #c0392b;">${meta}</text>`;
+      } else {
+         nodesSVG += `<text x="${n._x}" y="${n._y - 5}" text-anchor="middle" class="name">${name}</text>`;
+         nodesSVG += `<text x="${n._x}" y="${n._y + 15}" text-anchor="middle" class="meta">${meta}</text>`;
+      }
     }
     (n.children || []).forEach(buildContent);
   })(data);
+  
+  // Dùng giá trị màu đã hardcode
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${bb.minX - pad} ${bb.minY - pad} ${w} ${h}">
     <style>
-      rect { fill: ${getCssVar('--card')}; stroke: ${getCssVar('--border')}; }
-      .name { font: bold 15px sans-serif; fill: ${getCssVar('--ink')}; }
-      .meta { font: 13px sans-serif; fill: ${getCssVar('--muted')}; }
-      path { stroke: rgba(138,160,181,.7); stroke-width: 4; fill: none; }
+      rect { fill: ${colors.card}; stroke: ${colors.border}; }
+      .name { font: bold 15px sans-serif; fill: ${colors.ink}; }
+      .meta { font: 13px sans-serif; fill: ${colors.muted}; }
+      path { stroke: ${colors.line}; stroke-width: 4; fill: none; }
     </style>
     <g>${paths}</g><g>${nodesSVG}</g>
   </svg>`;
 }
+
+// === SỬA HÀM NÀY (Hardcode màu nền) ===
 async function convertSVGtoJPG(svgString, quality = 0.9) {
   const canvas = document.createElement('canvas'); const c2d = canvas.getContext('2d');
   const img = new Image(); const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(svgBlob);
-  const loadImagePromise = new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = url; });
-  await loadImagePromise; URL.revokeObjectURL(url);
-  canvas.width = img.width; canvas.height = img.height;
-  c2d.fillStyle = getCssVar('--bg'); c2d.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const loadImagePromise = new Promise((resolve, reject) => { 
+    img.onload = resolve; 
+    img.onerror = (err) => {
+        console.error("Lỗi tải SVG vào <img>:", err);
+        reject(new Error('Không thể tải SVG vào ảnh để chuyển đổi.'));
+    };
+    img.src = url; 
+  });
+  
+  await loadImagePromise; 
+  URL.revokeObjectURL(url);
+  
+  canvas.width = img.width; 
+  canvas.height = img.height;
+  
+  // Lấy màu nền (BG) và gán cứng
+  const bgColor = getCssVar('--bg');
+  c2d.fillStyle = bgColor;
+  
+  c2d.fillRect(0, 0, canvas.width, canvas.height);
   c2d.drawImage(img, 0, 0);
+  
   return canvas.toDataURL('image/jpeg', quality);
 }
-$('#btnExportCSV').onclick = () => { if (!data) return alert('Chưa có dữ liệu'); download('gia-pha.csv', '\uFEFF' + toCSV(), 'text/csv;charset=utf-8'); };
+
+// === SỬA LỖI NÚT XUẤT CSV (TẠO LINK TẢI) ===
+$('#btnExportCSV').onclick = () => { 
+  if (!data) return alert('Chưa có dữ liệu'); 
+  
+  const csvString = '\uFEFF' + toCSV();
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'gia-pha.csv';
+  link.className = 'btn';
+  link.textContent = 'Tải file CSV (Bấm vào đây)';
+  
+  const downloadArea = $('#download-area');
+  downloadArea.innerHTML = ''; // Xóa link cũ
+  downloadArea.appendChild(link);
+  
+  setTimeout(() => {
+    if (link.parentNode) link.remove();
+    URL.revokeObjectURL(url);
+  }, 15000);
+};
+
 $('#btnImportCSV').onclick = () => { if (!isOwner) return; $('#fileImportCSV').click(); };
 $('#fileImportCSV').onchange = async (e) => {
   const f = e.target.files[0]; if (!f) return;
   try { const text = await f.text(); pushHistory(); data = fromCSV(text); setUnsavedChanges(true); updateLayout(); scheduleRender(); }
   catch(err) { alert('Lỗi khi đọc file CSV/Excel: ' + err.message); console.error(err); }
   finally { e.target.value = ''; }
+};
+
+
+// === SỬA LỖI NÚT XUẤT SVG (TẠO LINK TẢI) ===
+$('#btnExportSVG').onclick = () => {
+  const svgString = generateSVGString();
+  if (!svgString) {
+    alert('Chưa có dữ liệu để xuất.');
+    return;
+  }
+  
+  const blob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'gia-pha.svg';
+  link.className = 'btn';
+  link.textContent = 'Tải file SVG (Bấm vào đây)';
+  
+  const downloadArea = $('#download-area');
+  downloadArea.innerHTML = ''; // Xóa link cũ (nếu có)
+  downloadArea.appendChild(link);
+  
+  // Tự động xóa link sau 15 giây
+  setTimeout(() => {
+    if (link.parentNode) link.remove();
+    URL.revokeObjectURL(url);
+  }, 15000);
+};
+
+// === SỬA LỖI NÚT XUẤT JPG (TẠO LINK TẢI) ===
+$('#btnExportJPG').onclick = async () => {
+  const btn = $('#btnExportJPG'); 
+  btn.disabled = true; 
+  btn.textContent = 'Đang xử lý...';
+  
+  const downloadArea = $('#download-area');
+  downloadArea.innerHTML = ''; // Xóa link cũ (nếu có)
+
+  try {
+    const svgString = generateSVGString(); 
+    if (!svgString) { 
+      alert('Chưa có dữ liệu để xuất.'); 
+      return; 
+    }
+    
+    const jpgDataUrl = await convertSVGtoJPG(svgString);
+    
+    const link = document.createElement('a');
+    link.href = jpgDataUrl;
+    link.download = 'gia-pha.jpg';
+    link.className = 'btn';
+    link.style.background = 'var(--success)';
+    link.style.color = 'white';
+    link.textContent = 'Tải file JPG (Bấm vào đây)';
+    
+    downloadArea.appendChild(link);
+    
+    // Tự động xóa link sau 15 giây
+    setTimeout(() => {
+      if (link.parentNode) link.remove();
+      // Không cần revoke data URL
+    }, 15000);
+
+  } catch (err) {
+    console.error('Lỗi chuyển đổi SVG sang JPG:', err);
+    alert('Đã xảy ra lỗi khi chuyển đổi file.');
+    downloadArea.innerHTML = `<span style='color: var(--danger)'>Lỗi: ${err.message}</span>`;
+  } finally {
+    btn.disabled = false; 
+    btn.textContent = 'Xuất JPG';
+  }
 };
 
 $('#btnReset').onclick = () => { if (!isOwner) return; openConfirm('Xóa toàn bộ dữ liệu?', () => { pushHistory(); data = null; highlightedNodeId = null; updateSelectionActions(); setUnsavedChanges(true); updateLayout(); scheduleRender(); }); };
@@ -1801,19 +1917,20 @@ function init() {
   $('#btnToggleAudioAlbum').onclick = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
   $('#btnCloseImage').onclick = () => { imageSidebar.classList.remove('show'); if (!audioSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#btnCloseAudio').onclick = () => { audioSidebar.classList.remove('show'); if (!imageSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
+  
   // === THÊM MỚI: Tự động đóng sidebar khi click ra ngoài ===
   overlay.onclick = () => {
     // 1. Đóng sidebar trái
-    // (Chúng ta dùng .add() thay vì .toggle() để đảm bảo nó luôn đóng)
     app.classList.add('sidebar-collapsed');
   
     // 2. Đóng sidebar media (phải)
     closeAllMediaSidebars();
   };
+  
   // === THÊM SỰ KIỆN CHO NÚT MỚI ===
   $('#btnUploadImage').onclick = () => handleMediaUpload('image');
   $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
-  $('#btnCreateNewTree').onclick = handleCreateNewTree; // <-- THÊM DÒNG NÀY
+  $('#btnCreateNewTree').onclick = handleCreateNewTree;
   // ==============================
 
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
