@@ -1,5 +1,46 @@
 // /functions/upload-media.js
-// KHÔNG CẦN IMPORT AWS-SDK HAY XMLDOM NỮA
+
+// === SỬA LỖI: Polyfill cho DOMParser và Node ===
+import { DOMParser, Node } from 'xmldom';
+self.DOMParser = DOMParser;
+self.Node = Node;
+if (typeof self.Node === 'undefined') {
+  self.Node = {
+    TEXT_NODE: 3,
+    ELEMENT_NODE: 1,
+    COMMENT_NODE: 8
+  };
+}
+// ===========================================
+
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+// === THÊM MỚI: Các hàm trợ giúp JSON và CORS ===
+// (Copy từ file save-data.js)
+// ============================================
+const JSON_HEADERS = {
+  'content-type': 'application/json; charset=utf-8'
+};
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'POST, OPTIONS',
+  'access-control-allow-headers': 'authorization, content-type'
+};
+
+function json(body, status = 200, extra = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...CORS_HEADERS, ...extra }
+  });
+}
+
+export async function onRequestOptions() {
+  // Preflight
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+// ============================================
+// === KẾT THÚC THÊM MỚI ======================
+
 
 // (Code xác thực Auth0 và các hàm helpers giữ nguyên)
 // ------------- Base64 helpers (cho JWT) -------------
@@ -32,13 +73,18 @@ async function verifyAuth0JWT(token, env) {
   if (!h || !p || !s) throw new Error('Malformed JWT');
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(p)));
+  
   if (header.alg !== 'RS256') throw new Error('Unsupported alg');
+
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
+  
+  // Kiểm tra Audience (Quan trọng)
   const aud = payload.aud;
   const wantAud = env.AUTH0_AUDIENCE;
   const okAud = Array.isArray(aud) ? aud.includes(wantAud) : aud === wantAud;
   if (!okAud) throw new Error('Bad audience');
+
   const nowSec = Math.floor(Date.now() / 1000);
   if (typeof payload.exp === 'number' && nowSec > payload.exp + 60) {
     throw new Error('Token expired');
@@ -62,7 +108,7 @@ async function isValidToken(request, env) {
     const auth = request.headers.get('authorization') || request.headers.get('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) return false;
     const token = auth.slice(7);
-    await verifyAuth0JWT(token, env);
+    await verifyAuth0JWT(token, env); // Dùng hàm xác thực đầy đủ
     return true;
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -70,36 +116,50 @@ async function isValidToken(request, env) {
   }
 }
 
-// ------------- Handler (ĐÃ SỬA DÙNG R2 BINDING) -------------
 export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (!(await isValidToken(request, env))) {
-    return new Response(JSON.stringify({ message: "Xác thực thất bại." }), { status: 401 });
+    // === SỬA: Dùng hàm json() ===
+    return json({ message: "Xác thực thất bại." }, 401);
   }
+
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  });
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file"); // Đây là một đối tượng File (là một dạng Blob)
+    const file = formData.get("file");
     if (!file || !file.name) {
-      return new Response(JSON.stringify({ message: "Thiếu file tải lên." }), { status: 400 });
+      // === SỬA: Dùng hàm json() ===
+      return json({ message: "Thiếu file tải lên." }, 400);
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
     const key = `media/avatars/${Date.now()}-${safeName}`;
 
-    // Lưu file lên R2 (Dùng binding `env.GIAPHA_BUCKET`)
-    // `put` có thể nhận thẳng đối tượng File từ formData
-    await env.GIAPHA_BUCKET.put(key, file, {
-      httpMetadata: { contentType: file.type || 'application/octet-stream' },
-    });
+    await s3.send(new PutObjectCommand({
+      Bucket: env.R2_BUCKET,
+      Key: key,
+      Body: file,
+      ContentType: file.type || "application/octet-stream",
+      ACL: "public-read" // Nếu bucket là Public
+    }));
 
-    // Lấy URL public. Bạn phải cài đặt R2_PUBLIC_BASE_URL trong Environment Variables
-    const url = `${env.R2_PUBLIC_BASE_URL}/${key}`; 
+    const url = `${env.R2_PUBLIC_BASE_URL}/${key}`;
     
-    return new Response(JSON.stringify({ message: "Tải lên thành công!", url }), { status: 200 });
+    // === SỬA: Dùng hàm json() ===
+    return json({ message: "Tải lên thành công!", url }, 200);
+
   } catch (error) {
     console.error("R2 upload error:", error);
-    return new Response(JSON.stringify({ message: "Lỗi khi tải file: " + error.message }), { status: 500 });
+    // === SỬA: Dùng hàm json() ===
+    return json({ message: "Lỗi khi tải file: " + error.message }, 500);
   }
 }
