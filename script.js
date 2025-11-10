@@ -1801,7 +1801,15 @@ function init() {
   $('#btnToggleAudioAlbum').onclick = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
   $('#btnCloseImage').onclick = () => { imageSidebar.classList.remove('show'); if (!audioSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#btnCloseAudio').onclick = () => { audioSidebar.classList.remove('show'); if (!imageSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
-
+  // === THÊM MỚI: Tự động đóng sidebar khi click ra ngoài ===
+  overlay.onclick = () => {
+    // 1. Đóng sidebar trái
+    // (Chúng ta dùng .add() thay vì .toggle() để đảm bảo nó luôn đóng)
+    app.classList.add('sidebar-collapsed');
+  
+    // 2. Đóng sidebar media (phải)
+    closeAllMediaSidebars();
+  };
   // === THÊM SỰ KIỆN CHO NÚT MỚI ===
   $('#btnUploadImage').onclick = () => handleMediaUpload('image');
   $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
