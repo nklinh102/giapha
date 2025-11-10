@@ -1,35 +1,7 @@
 // /functions/submit-proposal.js
-
-// === SỬA LỖI: Polyfill cho DOMParser và TỰ TẠO Node constants ===
-import { DOMParser } from 'xmldom';
-self.DOMParser = DOMParser;
-
-// Tự tạo đối tượng Node và các hằng số mà AWS SDK cần
-// vì môi trường Worker không có sẵn.
-if (typeof self.Node === 'undefined') {
-  self.Node = {
-    TEXT_NODE: 3,
-    ELEMENT_NODE: 1,
-    COMMENT_NODE: 8
-  };
-}
-// ========================================================
-
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+// KHÔNG CẦN IMPORT AWS-SDK HAY XMLDOM NỮA
 
 const PROPOSALS_FILE_PATH = "data/proposals.json";
-
-// Helper đọc stream từ R2 body
-async function streamToString(stream) {
-  const reader = stream.getReader();
-  let result = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    result += new TextDecoder().decode(value);
-  }
-  return result;
-}
 
 // Hàm này sẽ chạy trên Cloudflare
 export async function onRequestPost(context) {
@@ -49,50 +21,29 @@ export async function onRequestPost(context) {
     });
   }
 
-  // 2. Khởi tạo S3/R2 Client
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    },
-  });
-
   let proposals = [];
 
   try {
-    // 3. ĐỌC file proposals.json hiện tại từ R2
-    try {
-      const getCmd = new GetObjectCommand({
-        Bucket: env.R2_BUCKET,
-        Key: PROPOSALS_FILE_PATH,
-      });
-      const response = await s3.send(getCmd);
-      const contentStr = await streamToString(response.Body);
-      proposals = JSON.parse(contentStr);
+    // 3. ĐỌC file proposals.json hiện tại từ R2 (Dùng binding `env.GIAPHA_BUCKET`)
+    const currentProposalsObj = await env.GIAPHA_BUCKET.get(PROPOSALS_FILE_PATH);
 
-    } catch (e) {
-      if (e.name === 'NoSuchKey') {
-        // File không tồn tại, sẽ tạo mới
-        console.log("proposals.json không tìm thấy, sẽ tạo file mới.");
-      } else {
-        throw e; // Lỗi khác
-      }
+    if (currentProposalsObj !== null) {
+      // File tồn tại, đọc nội dung
+      const contentStr = await currentProposalsObj.text();
+      proposals = JSON.parse(contentStr);
+    } else {
+      // File không tồn tại
+      console.log("proposals.json không tìm thấy, sẽ tạo file mới.");
     }
 
     // 4. Thêm đề xuất mới
     proposals.push(newProposal);
     const dataStr = JSON.stringify(proposals, null, 2);
 
-    // 5. GHI ĐÈ file proposals.json lên R2
-    await s3.send(new PutObjectCommand({
-      Bucket: env.R2_BUCKET,
-      Key: PROPOSALS_FILE_PATH,
-      Body: dataStr,
-      ContentType: "application/json; charset=utf-8",
-      ACL: "public-read"
-    }));
+    // 5. GHI ĐÈ file proposals.json lên R2 (Dùng binding `env.GIAPHA_BUCKET`)
+    await env.GIAPHA_BUCKET.put(PROPOSALS_FILE_PATH, dataStr, {
+      httpMetadata: { contentType: 'application/json; charset=utf-8' },
+    });
 
     // 6. Trả về thành công
     return new Response(JSON.stringify({ message: "Gửi đề xuất thành công!" }), { 
