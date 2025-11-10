@@ -1426,6 +1426,104 @@ function generateHierarchicalId(parent) {
   let suffix = 1; while (taken.has(suffix)) suffix++; return parent.id + '.' + suffix;
 }
 
+// ===================================================================
+// ====== HÀM MỚI ĐỂ QUẢN LÝ MEDIA ======
+// ===================================================================
+async function handleMediaUpload(mediaType) {
+  const fileInput = $('#mediaFileInput');
+  const nameInput = $('#mediaNameInput');
+  
+  const file = fileInput.files[0];
+  const displayName = nameInput.value.trim();
+
+  if (!file) {
+    alert('Bạn chưa chọn file.');
+    return;
+  }
+  if (!displayName) {
+    alert('Bạn chưa nhập tên hiển thị.');
+    nameInput.focus();
+    return;
+  }
+  if (!isOwner) {
+    alert('Bạn không có quyền.');
+    return;
+  }
+
+  // Vô hiệu hóa nút
+  const btnImg = $('#btnUploadImage');
+  const btnAud = $('#btnUploadAudio');
+  btnImg.disabled = true; btnAud.disabled = true;
+  const originalText = (mediaType === 'image') ? btnImg.textContent : btnAud.textContent;
+  (mediaType === 'image' ? btnImg : btnAud).textContent = 'Đang tải...';
+
+  try {
+    // 1. Tải file lên R2 (dùng hàm upload-media đã có)
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    // Chúng ta không dùng hàm uploadImageToR2() cũ vì nó bị
+    // ràng buộc vào modal. Chúng ta gọi trực tiếp callAdminFunction.
+    const { success, data: uploadData } = await callAdminFunction('upload-media', formData, true);
+
+    if (!success || !uploadData.url) {
+      throw new Error(uploadData.error || 'Lỗi khi tải file lên R2.');
+    }
+    
+    const newMediaUrl = uploadData.url;
+    console.log('Tải lên R2 thành công:', newMediaUrl);
+
+    // 2. Cập nhật globalSettings (trong bộ nhớ)
+    const newMediaObject = {
+      url: newMediaUrl,
+      name: displayName
+    };
+
+    // Đảm bảo các mảng media tồn tại
+    if (!globalSettings.media) globalSettings.media = { images: [], audios: [] };
+    
+    if (mediaType === 'image') {
+      if (!globalSettings.media.images) globalSettings.media.images = [];
+      globalSettings.media.images.push(newMediaObject);
+    } else {
+      if (!globalSettings.media.audios) globalSettings.media.audios = [];
+      globalSettings.media.audios.push(newMediaObject);
+    }
+
+    // 3. Lưu file db.json mới lên R2 (dùng hàm save-data đã có)
+    (mediaType === 'image' ? btnImg : btnAud).textContent = 'Đang lưu...';
+    
+    const settingsPayload = { filePath: 'data/db.json', data: globalSettings };
+    const { success: saveSuccess } = await callAdminFunction('save-data', settingsPayload);
+
+    if (!saveSuccess) {
+      throw new Error('Tải file lên R2 thành công, nhưng lỗi khi cập nhật db.json.');
+    }
+
+    // 4. Xong! Cập nhật UI
+    alert(`Đã thêm ${mediaType === 'image' ? 'ảnh' : 'audio'} "${displayName}" thành công!`);
+    
+    if (mediaType === 'image') {
+      populateImageSidebar(); // Cập nhật ngay sidebar ảnh
+    } else {
+      populateAudioSidebar(); // Cập nhật ngay sidebar audio
+    }
+
+    // Reset input
+    fileInput.value = '';
+    nameInput.value = '';
+
+  } catch (err) {
+    console.error('Lỗi khi upload media:', err);
+    alert('Đã xảy ra lỗi: ' + err.message);
+  } finally {
+    // Kích hoạt lại nút
+    btnImg.disabled = false; btnAud.disabled = false;
+    (mediaType === 'image' ? btnImg : btnAud).textContent = originalText;
+  }
+}
+
+
 function init() {
   // 1) Gắn sự kiện UI
   new ResizeObserver(scheduleRender).observe(canvasContainer);
@@ -1513,6 +1611,12 @@ function init() {
   $('#btnToggleAudioAlbum').onclick = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
   $('#btnCloseImage').onclick = () => { imageSidebar.classList.remove('show'); if (!audioSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#btnCloseAudio').onclick = () => { audioSidebar.classList.remove('show'); if (!imageSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
+
+  // === THÊM SỰ KIỆN CHO NÚT MỚI ===
+  $('#btnUploadImage').onclick = () => handleMediaUpload('image');
+  $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
+  // ==============================
+
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
   $('#media-viewer').onclick = (e) => { if (e.target.id === 'media-viewer') $('#media-viewer').classList.remove('show'); };
 
