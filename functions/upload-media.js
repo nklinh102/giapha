@@ -1,9 +1,10 @@
 // /functions/upload-media.js
 
-// === SỬA LỖI: Polyfill cho DOMParser và Node ===
+// === SỬA LỖI: Polyfill cho DOMParser và Node constants ===
 import { DOMParser, Node } from 'xmldom';
 self.DOMParser = DOMParser;
 self.Node = Node;
+
 if (typeof self.Node === 'undefined') {
   self.Node = {
     TEXT_NODE: 3,
@@ -15,9 +16,7 @@ if (typeof self.Node === 'undefined') {
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-// === THÊM MỚI: Các hàm trợ giúp JSON và CORS ===
-// (Copy từ file save-data.js)
-// ============================================
+// === Thêm hàm trợ giúp JSON và CORS ===
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
 };
@@ -39,8 +38,6 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
 // ============================================
-// === KẾT THÚC THÊM MỚI ======================
-
 
 // (Code xác thực Auth0 và các hàm helpers giữ nguyên)
 // ------------- Base64 helpers (cho JWT) -------------
@@ -120,7 +117,6 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (!(await isValidToken(request, env))) {
-    // === SỬA: Dùng hàm json() ===
     return json({ message: "Xác thực thất bại." }, 401);
   }
 
@@ -137,29 +133,30 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const file = formData.get("file");
     if (!file || !file.name) {
-      // === SỬA: Dùng hàm json() ===
       return json({ message: "Thiếu file tải lên." }, 400);
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
     const key = `media/avatars/${Date.now()}-${safeName}`;
 
+    // === SỬA LỖI: Chuyển 'File' thành 'ArrayBuffer' ===
+    const arrayBuffer = await file.arrayBuffer();
+    // ==============================================
+
     await s3.send(new PutObjectCommand({
       Bucket: env.R2_BUCKET,
       Key: key,
-      Body: file,
+      Body: arrayBuffer, // <-- Gửi ArrayBuffer thay vì 'file'
       ContentType: file.type || "application/octet-stream",
       ACL: "public-read" // Nếu bucket là Public
     }));
 
     const url = `${env.R2_PUBLIC_BASE_URL}/${key}`;
     
-    // === SỬA: Dùng hàm json() ===
     return json({ message: "Tải lên thành công!", url }, 200);
 
   } catch (error) {
     console.error("R2 upload error:", error);
-    // === SỬA: Dùng hàm json() ===
     return json({ message: "Lỗi khi tải file: " + error.message }, 500);
   }
 }
