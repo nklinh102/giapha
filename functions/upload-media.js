@@ -1,24 +1,7 @@
 // /functions/upload-media.js
+// KHÔNG CẦN IMPORT AWS-SDK HAY XMLDOM NỮA
 
-// === SỬA LỖI: Polyfill cho DOMParser và TỰ TẠO Node constants ===
-import { DOMParser } from 'xmldom';
-self.DOMParser = DOMParser;
-
-// Tự tạo đối tượng Node và các hằng số mà AWS SDK cần
-// vì môi trường Worker không có sẵn.
-if (typeof self.Node === 'undefined') {
-  self.Node = {
-    TEXT_NODE: 3,
-    ELEMENT_NODE: 1,
-    COMMENT_NODE: 8
-  };
-}
-// ========================================================
-
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-// ... (phần còn lại của file y hệt như trước, bao gồm cả code xác thực Auth0) ...
-
+// (Code xác thực Auth0 và các hàm helpers giữ nguyên)
 // ------------- Base64 helpers (cho JWT) -------------
 function base64UrlToUint8Array(b64url) {
   const pad = '='.repeat((4 - (b64url.length % 4)) % 4);
@@ -49,18 +32,13 @@ async function verifyAuth0JWT(token, env) {
   if (!h || !p || !s) throw new Error('Malformed JWT');
   const header = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(h)));
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(p)));
-  
   if (header.alg !== 'RS256') throw new Error('Unsupported alg');
-
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
-  
-  // Kiểm tra Audience (Quan trọng)
   const aud = payload.aud;
   const wantAud = env.AUTH0_AUDIENCE;
   const okAud = Array.isArray(aud) ? aud.includes(wantAud) : aud === wantAud;
   if (!okAud) throw new Error('Bad audience');
-
   const nowSec = Math.floor(Date.now() / 1000);
   if (typeof payload.exp === 'number' && nowSec > payload.exp + 60) {
     throw new Error('Token expired');
@@ -84,7 +62,7 @@ async function isValidToken(request, env) {
     const auth = request.headers.get('authorization') || request.headers.get('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) return false;
     const token = auth.slice(7);
-    await verifyAuth0JWT(token, env); // Dùng hàm xác thực đầy đủ
+    await verifyAuth0JWT(token, env);
     return true;
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -92,6 +70,7 @@ async function isValidToken(request, env) {
   }
 }
 
+// ------------- Handler (ĐÃ SỬA DÙNG R2 BINDING) -------------
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -99,18 +78,9 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ message: "Xác thực thất bại." }), { status: 401 });
   }
 
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    },
-  });
-
   try {
     const formData = await request.formData();
-    const file = formData.get("file");
+    const file = formData.get("file"); // Đây là một đối tượng File (là một dạng Blob)
     if (!file || !file.name) {
       return new Response(JSON.stringify({ message: "Thiếu file tải lên." }), { status: 400 });
     }
@@ -118,15 +88,15 @@ export async function onRequestPost(context) {
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
     const key = `media/avatars/${Date.now()}-${safeName}`;
 
-    await s3.send(new PutObjectCommand({
-      Bucket: env.R2_BUCKET,
-      Key: key,
-      Body: file,
-      ContentType: file.type || "application/octet-stream",
-      ACL: "public-read" // Nếu bucket là Public
-    }));
+    // Lưu file lên R2 (Dùng binding `env.GIAPHA_BUCKET`)
+    // `put` có thể nhận thẳng đối tượng File từ formData
+    await env.GIAPHA_BUCKET.put(key, file, {
+      httpMetadata: { contentType: file.type || 'application/octet-stream' },
+    });
 
-    const url = `${env.R2_PUBLIC_BASE_URL}/${key}`;
+    // Lấy URL public. Bạn phải cài đặt R2_PUBLIC_BASE_URL trong Environment Variables
+    const url = `${env.R2_PUBLIC_BASE_URL}/${key}`; 
+    
     return new Response(JSON.stringify({ message: "Tải lên thành công!", url }), { status: 200 });
   } catch (error) {
     console.error("R2 upload error:", error);
