@@ -76,7 +76,6 @@ async function verifyAuth0JWT(token, env) {
   const ISSUER = `https://${env.AUTH0_DOMAIN}/`;
   if (payload.iss !== ISSUER) throw new Error('Bad issuer');
   
-  // Kiểm tra Audience (Quan trọng)
   const aud = payload.aud;
   const wantAud = env.AUTH0_AUDIENCE;
   const okAud = Array.isArray(aud) ? aud.includes(wantAud) : aud === wantAud;
@@ -105,7 +104,7 @@ async function isValidToken(request, env) {
     const auth = request.headers.get('authorization') || request.headers.get('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) return false;
     const token = auth.slice(7);
-    await verifyAuth0JWT(token, env); // Dùng hàm xác thực đầy đủ
+    await verifyAuth0JWT(token, env); 
     return true;
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -132,23 +131,30 @@ export async function onRequestPost(context) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
+    
+    // === THÊM MỚI: Đọc thư mục đích từ formData ===
+    // (Mặc định là 'media/avatars' nếu không được gửi lên)
+    const targetFolder = formData.get("targetFolder") || 'media/avatars';
+    // ============================================
+
     if (!file || !file.name) {
       return json({ message: "Thiếu file tải lên." }, 400);
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
-    const key = `media/avatars/${Date.now()}-${safeName}`;
+    
+    // === THAY ĐỔI: Dùng 'targetFolder' động ===
+    const key = `${targetFolder}/${Date.now()}-${safeName}`;
+    // =======================================
 
-    // === SỬA LỖI: Chuyển 'File' thành 'ArrayBuffer' ===
     const arrayBuffer = await file.arrayBuffer();
-    // ==============================================
 
     await s3.send(new PutObjectCommand({
       Bucket: env.R2_BUCKET,
       Key: key,
-      Body: arrayBuffer, // <-- Gửi ArrayBuffer thay vì 'file'
+      Body: arrayBuffer, 
       ContentType: file.type || "application/octet-stream",
-      ACL: "public-read" // Nếu bucket là Public
+      ACL: "public-read"
     }));
 
     const url = `${env.R2_PUBLIC_BASE_URL}/${key}`;
