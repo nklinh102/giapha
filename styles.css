@@ -713,3 +713,19 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 .owner-mode .delete-media-btn {
   display: flex;
 }
+/* CSS cho ảnh xem trước (Preview) ở Sidebar */
+.settings-preview-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-top: 8px;
+  background-color: var(--bg);
+  display: none; /* Mặc định ẩn đi */
+}
+
+/* Chỉ hiện ra khi nó có ảnh (có src) */
+.settings-preview-img[src] {
+  display: block; 
+}
