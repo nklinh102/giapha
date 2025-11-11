@@ -309,13 +309,13 @@ async function saveAllChanges() {
 
 // ===================================================================
 // ====== TẢI ẢNH LÊN (R2) ======
+// === CẬP NHẬT: Gửi `targetFolder` cho backend ===
 async function uploadImageToR2(file) {
   const formData = new FormData();
   formData.append('file', file, file.name);
   
-  // === THÊM MỚI: Gửi đúng thư mục cho avatar ===
+  // Gửi đúng thư mục cho avatar
   formData.append('targetFolder', 'media/avatars');
-  // ==========================================
 
   const saveBtn = $('#mSave');
   const originalBtnText = saveBtn.textContent;
@@ -1840,6 +1840,61 @@ async function handleCreateNewTree() {
   }
 }
 
+// ===================================================================
+// ====== ===== CHỨC NĂNG MỚI: XÓA PHẢ ĐỒ ===== ======
+// ===================================================================
+async function handleDeleteTree() {
+  if (!isOwner) {
+    alert('Bạn không có quyền.');
+    return;
+  }
+  
+  const selectedFileName = treeSelector.value;
+  const selectedTree = globalSettings.treeIndex.find(t => t.fileName === selectedFileName);
+  
+  if (!selectedTree) {
+    alert('Không tìm thấy phả đồ đã chọn.');
+    return;
+  }
+
+  // Không cho phép xóa cây cuối cùng
+  if (globalSettings.treeIndex.length <= 1) {
+    alert('Bạn không thể xóa cây phả đồ cuối cùng.');
+    return;
+  }
+
+  // 1. Xác nhận
+  openConfirm(`BẠN CÓ CHẮC KHÔNG?\n\nBạn sắp xóa phả đồ: "${selectedTree.displayName}".\n\nThao tác này chỉ xóa phả đồ khỏi menu. File dữ liệu gốc (${selectedTree.fileName}) sẽ KHÔNG bị xóa khỏi R2 (để an toàn).`, async () => {
+    try {
+      // 2. Xóa item khỏi mảng treeIndex
+      globalSettings.treeIndex = globalSettings.treeIndex.filter(t => t.fileName !== selectedFileName);
+
+      // 3. Lưu file db.json mới lên R2
+      const settingsPayload = { filePath: 'data/db.json', data: globalSettings };
+      const { success } = await callAdminFunction('save-data', settingsPayload);
+
+      if (!success) {
+        throw new Error('Lỗi khi lưu db.json sau khi xóa cây.');
+      }
+
+      // 4. Cập nhật lại UI
+      alert(`Đã xóa phả đồ "${selectedTree.displayName}" khỏi danh sách.`);
+      
+      // Tải lại danh sách (đã bị xóa)
+      populateTreeSelector();
+      
+      // Tải cây phả đồ đầu tiên trong danh sách còn lại
+      await loadTreeData(globalSettings.treeIndex[0].fileName);
+
+    } catch (err) {
+      console.error('Lỗi khi xóa phả đồ:', err);
+      alert('Đã xảy ra lỗi khi xóa: ' + err.message);
+      // (Nếu lỗi thì tải lại toàn bộ data cho chắc)
+      loadInitialData(); 
+    }
+  });
+}
+
 
 function init() {
   // 1) Gắn sự kiện UI
@@ -1942,6 +1997,7 @@ function init() {
   $('#btnUploadImage').onclick = () => handleMediaUpload('image');
   $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
   $('#btnCreateNewTree').onclick = handleCreateNewTree;
+  $('#btnDeleteTree').onclick = handleDeleteTree; // <-- THÊM DÒNG NÀY
   // ==============================
 
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
