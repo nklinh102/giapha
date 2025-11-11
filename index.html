@@ -23,8 +23,10 @@
       <button class='btn' id='btnToggleSidebar' title='Ẩn/hiện thanh điều khiển'>
         <svg fill='none' height='24' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><line x1='3' x2='21' y1='12' y2='12'/><line x1='3' x2='21' y1='6' y2='6'/><line x1='3' x2='21' y1='18' y2='18'/></svg>
       </button>
-      <div id='tree-selector-wrapper'>
-        <select id='tree-selector' title='Chọn Phả Đồ'></select>
+      
+      <div id='tree-selector-wrapper' style='display: flex; align-items: center; gap: 8px; flex-grow: 1; margin: 0 10px;'>
+        <select id='tree-selector' title='Chọn Phả Đồ' style='width: 100%;'></select>
+        <button class='btn owner-only-field' id='btnDeleteTree' title='Xóa phả đồ hiện tại' style='flex-shrink: 0; padding: 6px 10px; background-color: var(--danger); color: white; display: none;'>&times;</button>
       </div>
       <h1 id='appTitle'>SƠ ĐỒ GIA PHẢ</h1>
     </header>
