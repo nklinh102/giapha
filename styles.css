@@ -1,8 +1,5 @@
-/* =================================================================== */
-/* ====== CÀI ĐẶT GỐC (COLORS, THEMES) ====== */
-/* =================================================================== */
 :root {
-  --header-height: 52px; /* Vẫn giữ biến này, nhưng header sẽ bị ẩn */
+  --header-height: 52px;
   --bg: #2a1d1d; 
   --panel: #3d2c2c; 
   --card: #4a3a3a;
@@ -58,42 +55,84 @@
 html,body{height:100%}
 body{margin:0; background:var(--bg); color:var(--ink); font:14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden;
 display: flex; flex-direction: column; transition: background .3s, color .3s;}
-
-/* =================================================================== */
-/* ====== GIAO DIỆN MỚI (ẨN CÁI CŨ) ====== */
-/* =================================================================== */
-
-/* --- Ẩn header cũ --- */
-#app-header {
-    display: none;
+#app-header { display: flex; align-items: center;
+padding: 0 12px; height: var(--header-height); background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
-/* --- Ẩn sidebar trái cũ --- */
-.panel.left {
-    display: none;
+#app-header h1 {
+  font-family: 'Tac One', sans-serif;
+  font-weight: normal;
+  font-size: 32px;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--ink);
+  flex-grow: 1;
+  margin: 0;
+  padding: 4px 8px;
 }
+#tree-selector-wrapper { margin: 0 10px; flex-shrink: 0;
+}
+#tree-selector {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 14px;
+    max-width: 200px;
+}
+#app-header h1[contenteditable]:focus { background: var(--bg); outline: 1px solid var(--accent);
+box-shadow: 0 0 10px rgb(from var(--accent) r g b / 0.3); }
+#btnToggleSidebar { flex-shrink: 0;
+width: 40px; height: 40px; padding: 8px; background: transparent; border: 1px solid transparent; color: var(--muted);
+}
+#btnToggleSidebar:hover { color: var(--ink); background: var(--card); border-color: var(--border); transform: none; }
 
-/* --- App layout mới --- */
 .app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    padding: 0; /* Xóa padding cũ */
-    gap: 0; /* Xóa gap cũ */
+    display: block;
+    height: calc(100vh - var(--header-height));
+    padding: 4px;
+    gap: 12px;
 }
-.main-content {
-    position: relative;
-    flex-grow: 1;
-    overflow: hidden;
+.right {
+    height: 100%;
 }
-/* --- Canvas chiếm toàn bộ main-content --- */
+.left {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    width: min(85vw, 340px); 
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform .3s ease;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+.app:not(.sidebar-collapsed) .left {
+    transform: translateX(0);
+}
+#overlay {
+    display: block;
+}
+.app:not(.sidebar-collapsed) #overlay:not(.show-for-media) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow);}
+.left header{padding:16px 16px 8px;border-bottom:1px solid var(--border)}
+.left header h1{font-size:16px;margin:0 0 4px}
+.left header .sub{color:var(--muted);font-size:12px}
+.scroll{overflow:auto;padding:12px}
+.field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+input,textarea{background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:10px;padding:10px}
+.right{position:relative;overflow:hidden}
 .canvas-container{
-  position:absolute;
-  inset: 0;
+  position:relative;
   height:100%;
-  width: 100%;
   overflow:hidden;
-  border-radius:0; /* Xóa bo góc */
-  border: none; /* Xóa viền */
+  border-radius:16px;
   background-color: var(--bg);
   background-repeat: no-repeat;
   background-size: cover;
@@ -110,273 +149,6 @@ display: flex; flex-direction: column; transition: background .3s, color .3s;}
     height: 100%;
     z-index: 2;
 }
-
-/* =================================================================== */
-/* ====== THANH ĐIỀU KHIỂN DƯỚI ĐÁY (BOTTOM DOCK) MỚI ====== */
-/* =================================================================== */
-#bottom-dock {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  
-  display: flex;
-  gap: 16px;
-  align-items: flex-end;
-  
-  background: var(--panel);
-  padding: 8px 12px;
-  border-radius: 999px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-}
-.dock-btn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: color 0.2s, background-color 0.2s;
-  min-width: 70px;
-}
-.dock-btn:hover {
-  color: var(--ink);
-  background-color: var(--card);
-}
-.dock-btn.main {
-  background: var(--accent);
-  color: white;
-  border-radius: 24px;
-  padding: 12px 16px;
-  transform: translateY(-15px);
-  box-shadow: 0 4px 15px rgba(from var(--accent) r g b / 0.4);
-}
-.dock-btn.main:hover {
-  background: var(--accent);
-  color: white;
-  transform: translateY(-17px);
-}
-.dock-btn svg {
-  width: 24px;
-  height: 24px;
-}
-.dock-btn.main svg {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 2px;
-}
-
-/* =================================================================== */
-/* ====== MENU POP-UP MỚI (BOTTOM SHEETS) ====== */
-/* =================================================================== */
-.bottom-sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-  
-  transform: translateY(100%);
-  transition: transform .3s ease-out;
-  visibility: hidden;
-  
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-}
-.bottom-sheet.show {
-  transform: translateY(0);
-  visibility: visible;
-}
-.bottom-sheet header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.bottom-sheet header h1 {
-  font-size: 16px;
-  margin: 0;
-}
-.bottom-sheet .btn-close-sheet {
-  padding: 4px 8px;
-  font-size: 20px;
-}
-.bottom-sheet .scroll {
-  overflow-y: auto;
-  padding: 12px;
-}
-
-/* Cập nhật lại logic của .toolbar (giờ nó nằm trong bottom-sheet) */
-.toolbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 12px 0}
-
-/* Cập nhật logic của .owner-only-field (vẫn dùng class cũ) */
-.owner-only-field {
-  display: none !important;
-}
-.owner-mode .owner-only-field {
-  display: flex !important; /* Dùng flex để nó co giãn tốt */
-  flex-direction: column; /* Đảm bảo các field bên trong nó xếp chồng lên nhau */
-}
-
-/* Cập nhật lại header admin (nằm trong menu Gia Phả) */
-#header-admin-controls {
-  display: flex;
-  flex-direction: row; /* Xếp hàng ngang */
-  justify-content: space-between; 
-  align-items: center;
-  margin-top: 10px;
-  gap: 10px;
-  padding: 0 12px;
-}
-#header-admin-controls #auth-container {
-  padding-top: 0 !important; /* Xóa padding cũ */
-}
-#header-admin-controls #btnSaveChanges {
-  flex-shrink: 0; 
-  padding: 8px 12px; 
-  width: auto; 
-}
-
-/* Cập nhật nút đăng xuất */
-#auth-container #signout-button {
-    width: 100% !important;
-}
-
-/* Ẩn/hiện nút Thống kê */
-#menu-chuc-nang #stats {
-  display: none;
-  padding-top: 12px;
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
-}
-#menu-chuc-nang #stats.show {
-  display: block;
-}
-
-/* =================================================================== */
-/* ====== ĐIỀU KHIỂN GÓC TRÊN BÊN PHẢI MỚI ====== */
-/* =================================================================== */
-#top-controls {
-  position: absolute; 
-  top: 12px; 
-  right: 12px; 
-  z-index: 10;
-  pointer-events: none; /* Chỉ cho phép click vào các nút bên trong */
-}
-#top-controls .button-group-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto; /* Cho phép click */
-}
-#top-controls .btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  padding: 5px;
-  flex-shrink: 0;
-  opacity: 0.8;
-  transition: opacity 0.2s, transform 0.2s;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-#top-controls .btn svg {
-  width: 20px;
-  height: 20px;
-}
-#top-controls .btn:hover {
-  opacity: 1;
-  transform: scale(1.05);
-}
-#zoomReset {
-  font-size: 13px;
-  width: 44px; /* Rộng hơn một chút */
-  border-radius: 17px;
-}
-
-/* Cập nhật Search (nằm trong top-controls) */
-#search-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-#search-container #search {
-  width: 0;
-  opacity: 0;
-  visibility: hidden;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--ink);
-  border-radius: 17px;
-  padding: 8px 35px 8px 15px;
-  height: 34px;
-  transition: all .3s ease;
-  transform: translateX(10px);
-  padding-left: 15px;
-}
-#search-container.search-expanded #search {
-  width: 200px;
-  opacity: 1;
-  visibility: visible;
-  margin-right: -34px;
-  transform: translateX(0);
-}
-#search-container #btnClearSearch {
-  position: absolute;
-  right: 45px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  display: none;
-  padding: 0 8px;
-  font-size: 20px;
-  line-height: 1;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity .3s;
-  pointer-events: none;
-}
-#search-container.search-expanded #btnClearSearch {
-  opacity: 1;
-  pointer-events: auto;
-}
-#search-container #btnToggleSearch {
-  z-index: 2; /* Nằm trên ô input */
-}
-
-/* =================================================================== */
-/* ====== CÁC STYLE CŨ (GIỮ NGUYÊN) ====== */
-/* =================================================================== */
-
-/* --- Các panel (Giờ dùng cho pop-up) --- */
-.panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow);}
-.scroll{overflow:auto;padding:12px}
-.field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
-input,textarea{background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:10px;padding:10px}
-
-/* --- Icons --- */
 #node-icons-container {
     position: absolute;
     top: 0;
@@ -403,8 +175,7 @@ input,textarea{background:var(--bg);border:1px solid var(--border);color:var(--i
   will-change: transform;
   visibility: hidden;
 }
-
-/* --- Nút chung --- */
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 0}
 .btn{ appearance:none; border:1px solid var(--border); background:var(--card); color:var(--ink); padding:10px 12px;
 border-radius:12px; cursor:pointer; transition:.2s transform,.2s opacity,.2s background-color; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .btn:hover{transform:translateY(-1px);
@@ -412,23 +183,28 @@ background-color: #2a3b55;}
 [data-theme="light"] .btn:hover { background-color: #eef2f8; }
 .btn[disabled]{ opacity:.5; pointer-events:none;
 cursor: not-allowed;}
-
-/* --- Toggle --- */
+.topbar{position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:5}
+.topbar .btn{padding:2px 6px; height: 30px; opacity: 0.75;
+transition: opacity 0.2s, transform 0.2s; }
+.topbar .btn:hover{opacity: 1;
+transform: scale(1.05);}
+.topbar .btn svg{width: 16px; height: 16px;}
+.topbar .btn .tooltip-text {font-size: 12px;}
+#zoomReset { font-size: 13px;
+}
+@media (max-width: 500px) { .topbar .btn .tooltip-text { display: none; } }
 .toggle{display:inline-flex;
 align-items:center;
 gap:.5rem;}
 .toggle-wrapper.disabled { opacity: 0.5; pointer-events: none;
 }
 
-/* --- Modals (Xác nhận, Thêm thành viên...) --- */
-.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.45);z-index:200} /* Tăng z-index */
+.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.45);z-index:20}
 .modal.show{display:grid}
 .dialog{width:min(560px,96vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .dialog header{padding:14px 16px;border-bottom:1px solid var(--border)}
 .dialog .body{padding:12px 16px;display:grid;gap:10px}
 .dialog footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
-
-/* --- Thống kê --- */
 #stats-content div { display: flex;
 justify-content: space-between; padding: 5px 2px; font-size: 13px; }
 #stats-content div:not(:last-child) { border-bottom: 1px solid var(--border);
@@ -442,27 +218,67 @@ justify-content: space-between; padding: 5px 2px; font-size: 13px; }
 font-size:11px; padding:.12rem .35rem; border:1px solid var(--border); border-radius:6px; background:var(--bg) }
 .btn-group { display: flex; gap: 8px;
 }
+#bottom-right-ui { 
+  position: absolute; 
+  bottom: 12px; 
+  right: 12px; 
+  z-index: 10; 
+  display: flex; 
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+#bottom-right-ui > * {
+  pointer-events: auto;
+}
+.button-group-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#bottom-right-ui .btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  padding: 5px;
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+}
+#bottom-right-ui .btn svg {
+  width: 20px;
+  height: 20px;
+}
+#bottom-right-ui .btn:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+.owner-only-field {
+  display: none !important;
+}
+.owner-mode .owner-only-field {
+  display: flex !important;
+}
 
-/* --- Cập nhật Overlay (cho cả bottom-sheet và media-sidebar) --- */
 #overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 99; /* Dưới bottom-sheet */
+  z-index: 99;
   opacity: 0;
   visibility: hidden;
   transition: opacity .3s, visibility .3s;
-  display: block; /* Luôn là block để bắt click */
+  display: none;
 }
-#overlay.show {
+#overlay.show-for-media {
+  display: block;
   opacity: 1;
   visibility: visible;
 }
 
-/* --- Cập nhật Media Sidebars (cho Album) --- */
 .media-sidebar {
   position: fixed;
-  top: 0; /* Bắt đầu từ trên cùng */
+  top: var(--header-height);
   right: 0;
   bottom: 0;
   width: min(85vw, 320px);
@@ -471,9 +287,6 @@ font-size:11px; padding:.12rem .35rem; border:1px solid var(--border); border-ra
   transition: transform .3s ease;
   display: flex;
   flex-direction: column;
-  border-radius: 0; /* Xóa bo góc */
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
 }
 .media-sidebar.show {
   transform: translateX(0);
@@ -582,8 +395,6 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 #gallery-prev:hover, #gallery-next:hover {
     opacity: 1;
 }
-
-/* --- Panel chọn thành viên (giữ nguyên) --- */
 #selection-actions {
     position: absolute;
     bottom: 20px;
@@ -634,30 +445,13 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     line-height: 1.2;
     margin: 0 8px;
   }
-  
-  /* --- Cập nhật cho di động --- */
-  #top-controls {
-    top: 8px;
-    right: 8px;
-  }
-  #bottom-dock {
-    bottom: 10px;
-    gap: 8px;
-    padding: 6px 8px;
-  }
-  .dock-btn {
-    min-width: 60px;
-  }
-  .dock-btn.main {
-    transform: translateY(-10px);
-  }
 }
 
 @media print {
   body { background: #fff; color: #000; }
   .app { display: block; height: auto; padding: 0; }
-  #app-header, .left, .topbar, #bottom-right-ui, #overlay, .media-sidebar, #selection-actions, #info-panel, #bottom-dock, .bottom-sheet { display: none; }
-  .panel.right, .main-content { border: none; box-shadow: none; border-radius: 0; height: auto; }
+  #app-header, .left, .topbar, #bottom-right-ui, #overlay, .media-sidebar, #selection-actions, #info-panel { display: none; }
+  .panel.right { border: none; box-shadow: none; border-radius: 0; }
   .canvas-container { border-radius: 0; }
 }
 
@@ -708,6 +502,69 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     word-break: break-word;
 }
 
+#search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+#search-container #search {
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 17px;
+  padding: 8px 35px 8px 15px;
+  height: 34px;
+  transition: all .3s ease;
+  transform: translateX(10px);
+  padding-left: 15px;
+}
+
+#search-container.search-expanded #search {
+  width: 200px;
+  opacity: 1;
+  visibility: visible;
+  margin-right: -34px;
+  transform: translateX(0);
+}
+
+#search-container #btnClearSearch {
+  position: absolute;
+  right: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: none;
+  padding: 0 8px;
+  font-size: 20px;
+  line-height: 1;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+
+#search-container.search-expanded #btnClearSearch {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search-container #btnToggleSearch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  padding: 5px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
 .actions-grid .btn.btn-accept {
     background-color: var(--success);
     color: white;
@@ -718,20 +575,24 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     color: white;
 }
 
-/* --- GIAO DIỆN MỚI CHO INFO PANEL (Giữ nguyên) --- */
+/* THAY THẾ TOÀN BỘ CỤM CSS CHO INFO PANEL BẰNG CỤM NÀY */
+
+/* --- GIAO DIỆN MỚI CHO INFO PANEL --- */
 #info-panel {
   position: absolute; 
   bottom: 20px;
   left: 20px;
   z-index: 10;
-  width: 240px; 
-  padding: 12px; 
+  width: 240px; /* Giảm chiều rộng */
+  padding: 12px; /* Giảm padding */
   padding-top: 45px;
   transition: transform .3s ease, opacity .3s ease, visibility .3s ease;
-  margin-top: 35px; 
+  margin-top: 35px; /* Giảm khoảng cách với top */
   background: #2c3e50;
   border: none;
 }
+
+/* Áp dụng màu sắc cho các theme khác nhau */
 [data-theme="light"] #info-panel {
     background: #ffffff;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -742,19 +603,21 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 [data-theme="slate"] #info-panel {
     background: #4a5568;
 }
+
 #info-panel.hidden {
   transform: translateY(10px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
+
 #info-panel #info-avatar {
   position: absolute;
   top: 0;
   right: 15px;
   transform: translateY(-50%);
-  width: 80px; 
-  height: 80px; 
+  width: 80px; /* Giảm kích thước avatar */
+  height: 80px; /* Giảm kích thước avatar */
   border-radius: 50%;
   border: 2px solid var(--panel);
   background-size: cover;
@@ -762,55 +625,63 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   z-index: 12;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
+
 #info-panel #info-name {
-  font-size: 20px; 
+  font-size: 20px; /* Giảm kích thước tên */
   font-weight: 700;
   color: var(--accent);
-  margin: -10px 0 12px 0; 
-  padding-bottom: 8px; 
+  margin: -10px 0 12px 0; /* Giảm margin bottom */
+  padding-bottom: 8px; /* Giảm padding bottom */
   border-bottom: 1px solid var(--border);
   line-height: 1.2;
 }
+
 #info-panel .info-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px; 
+  gap: 10px; /* Giảm khoảng cách các mục */
 }
+
 #info-panel .info-item {
   line-height: 1.3;
 }
+
 #info-panel .info-label {
   display: block;
-  font-size: 12px; 
+  font-size: 12px; /* Giảm kích thước label */
   color: var(--muted);
   margin-bottom: 2px;
 }
+
 #info-panel .info-value {
-  font-size: 15px; 
+  font-size: 15px; /* Giảm kích thước value */
   font-weight: 600;
   color: var(--ink);
 }
+
 #info-panel #act-propose-child {
   width: 100%;
-  margin-top: 15px; 
+  margin-top: 15px; /* Giảm khoảng cách với nút */
   background-color: var(--success);
   color: white;
   border-radius: 999px;
   font-weight: 600;
-  padding: 10px; 
+  padding: 10px; /* Giảm padding nút */
   border: none;
   font-size: 14px;
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
 #info-panel #act-propose-child:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(from var(--success) r g b / 0.4);
 }
-
-/* --- Nút Xóa Media (Giữ nguyên) --- */
+/* (SỬA LỖI: Đã xóa dấu '}' thừa ở đây) */
+/* CSS cho nút Xóa Media */
 .gallery-item, .playlist-item {
   position: relative;
 }
+
 .delete-media-btn {
   position: absolute;
   top: 4px;
@@ -832,15 +703,17 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   opacity: 0.7;
   transition: opacity 0.2s, background-color 0.2s;
 }
+
 .delete-media-btn:hover {
   background-color: rgba(220, 38, 38, 1); /* Đỏ đậm hơn */
   opacity: 1;
 }
+
+/* Chỉ hiện nút Xóa khi Admin đăng nhập */
 .owner-mode .delete-media-btn {
   display: flex;
 }
-
-/* --- Ảnh xem trước (Giữ nguyên) --- */
+/* CSS cho ảnh xem trước (Preview) ở Sidebar */
 .settings-preview-img {
   width: 100%;
   height: 100px;
@@ -849,11 +722,43 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border: 1px solid var(--border);
   margin-top: 8px;
   background-color: var(--bg);
-  display: none; 
+  display: none; /* Mặc định ẩn đi */
 }
+
+/* Chỉ hiện ra khi nó có ảnh (có src) */
 .settings-preview-img[src] {
   display: block; 
 }
+/* ===== SỬA GIAO DIỆN ADMIN (PHIÊN BẢN 2) ===== */
 
-/* --- Xóa style cũ của sidebar admin --- */
-/* (Đoạn CSS `SỬA GIAO DIỆN ADMIN` cũ đã bị xóa) */
+/* 1. Chia toolbar (các nút chức năng) thành 3 cột */
+.toolbar {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* 2. Xóa style cũ của nút Save (vì nó không còn trong grid nữa) */
+.toolbar #btnSaveChanges {
+  grid-column: auto; 
+}
+
+/* 3. Căn chỉnh header mới (Chỉ chứa nút Lưu) */
+/* Làm cho nút "Lưu Thay Đổi" căn sang bên phải */
+#header-admin-controls {
+  display: flex;
+  justify-content: flex-end; /* Đẩy nút "Lưu" sang bên phải */
+  margin-top: 8px; /* Thêm một chút khoảng cách với nút Đăng xuất */
+}
+
+/* 4. Đảm bảo nút "Lưu" có kích thước hợp lý */
+#header-admin-controls #btnSaveChanges {
+  flex-shrink: 0; 
+  padding: 8px 12px; 
+  width: auto; 
+  width: 100%; /* Cho nút "Lưu" rộng toàn bộ */
+}
+
+/* 5. Căn chỉnh nút Đăng xuất (nếu có) */
+#auth-container #signout-button {
+    width: 100% !important; /* Đảm bảo nút đăng xuất cũng rộng 100% */
+}
+/* ===== KẾT THÚC SỬA GIAO DIỆN ===== */
