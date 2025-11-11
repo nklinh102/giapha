@@ -19,152 +19,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 </head>
 <body data-theme='dark'>
-    <header id='app-header'>
-      <button class='btn' id='btnToggleSidebar' title='Ẩn/hiện thanh điều khiển'>
-        <svg fill='none' height='24' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><line x1='3' x2='21' y1='12' y2='12'/><line x1='3' x2='21' y1='6' y2='6'/><line x1='3' x2='21' y1='18' y2='18'/></svg>
-      </button>
-      
-      <div id='tree-selector-wrapper' style='display: flex; align-items: center; gap: 8px; flex-grow: 1; margin: 0 10px;'>
-        <select id='tree-selector' title='Chọn Phả Đồ' style='width: 100%;'></select>
-        <button class='btn owner-only-field' id='btnDeleteTree' title='Xóa phả đồ hiện tại' style='flex-shrink: 0; padding: 6px 10px; background-color: var(--danger); color: white;'>&times;</button>
-      </div>
 
-      <h1 id='appTitle'>SƠ ĐỒ GIA PHẢ</h1>
-    </header>
-    <div class='app sidebar-collapsed'>
+    <div class='app'>
       <div id='overlay'></div>
 
-      <aside class='panel left'>
-        <header>
-          <h1>Bảng điều khiển</h1>
-          <div class='sub'>Tùy chỉnh và quản lý sơ đồ</div>
-        <div id='auth-container' style='padding-top: 10px; font-size: 13px;'></div>
-            
-            <div id="header-admin-controls" class="owner-only-field">
-              <button class='btn' disabled='true' id='btnSaveChanges' style='background: var(--accent); color: white;'>Lưu Thay Đổi</button>
-        </div>
-        </header>
-        <div class='toolbar'>
-          <button class='btn owner-only-field' id='btnRoot'>+ Tạo gốc</button>
-          <button class='btn owner-only-field' id='btnUndo' title='Hoàn tác (Ctrl+Z)'>&#8630; Undo</button>
-          <button class='btn owner-only-field' id='btnRedo' title='Làm lại (Ctrl+Y)'>&#8631; Redo</button>
-          <button class='btn owner-only-field' id='btnImportCSV'>Nhập CSV/Excel</button>
-          <button class='btn' id='btnExportCSV'>Xuất CSV</button>
-          <button class='btn' id='btnExportSVG'>Xuất SVG</button>
-          <button class='btn' id='btnExportJPG'>Xuất JPG</button>
-          <button class='btn owner-only-field' id='btnReset'>Xóa sạch</button>
-        </div>
-        <div class='scroll'>
-          
-          <div class='field' id='download-area' style='padding: 0 12px; margin-bottom: 15px;'>
+      <main class='main-content'>
+        
+        <div id="top-controls">
+          <div class="button-group-wrapper">
+            <div id="search-container">
+              <input id='search' placeholder='Nhập tên để tìm...'>
+              <button id='btnClearSearch' title='Xóa tìm kiếm'>&#215;</button>
+              <button class='btn' id='btnToggleSearch' title='Tìm kiếm'>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </button>
             </div>
-
-          <div class='field owner-only-field' style='padding: 0 12px;'>
-            <label>URL Ảnh nền</label>
-            <div class='btn-group'>
-               <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
-               <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
-            </div>
-            <input type="file" id="fileUploadBg" accept="image/*" style="display: none;">
-            <img id="bgPreview" class="settings-preview-img" alt="Xem trước ảnh nền">
-            </div>
-
-          <div class='field' style='padding: 0 12px;'>
-              <label>Giao diện</label>
-              <select class='btn' id='themeSelector' style='width: 100%; padding: 10px 12px;'>
-                  <option value='dark'>Mặc định - Tối</option>
-                  <option value='light'>Mặc định - Sáng</option>
-                  <option value='sepia'>Nâu Cổ Điển - Sáng</option>
-                  <option value='deep-sea'>Biển Sâu - Tối</option>
-                  <option value='slate'>Thạch Lam - Tối</option>
-              </select>
+            <button class='btn' id='btnFit' title='Vừa với màn hình'>
+              <svg fill='none' height='24' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'/></svg>
+            </button>
+            <button class='btn' id='zoomOut'>&#8722;</button>
+            <button class='btn' id='zoomReset'>100%</button>
+            <button class='btn' id='zoomIn'>+</button>
           </div>
-          
-          <div class='field owner-only-field' id='gap-control-field' style='padding: 0 12px;'>
-            <label>Khoảng cách ngang (<span id='gapValueLabel'>40</span>px)</label>
-            <input id='gapXSlider' max='150' min='10' style='width:100%' type='range' value='40'>
-          </div>
-
-          <div class='field owner-only-field' style='padding: 0 12px; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
-              <label style='font-weight: bold; margin-bottom: 8px;'>Tùy chỉnh biểu tượng</label>
-              
-              <div class='toggle-wrapper' style='display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;'>
-                  <span>Hiển thị biểu tượng</span>
-                  <label class='toggle'>
-                    <input checked='true' id='toggleDecoration' type='checkbox'>
-                  </label>
-              </div>
-
-              <label>URL Biểu tượng</label>
-              <div class='btn-group'>
-                <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
-                <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
-              </div>
-              <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
-              <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
-              <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
-              <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
-              
-              <label style='margin-top: 8px;'>Khoảng cách dọc (<span id='decorationDistanceLabel'>85</span>px)</label>
-              <input id='decorationDistanceSlider' max='2500' min='20' style='width:100%' type='range' value='85'>
-          </div>
-   
-            <div class='field' id='stats' style='padding: 0 12px;'>
-            <label>Thống kê theo đời</label>
-            <div id='stats-content'></div>
-          </div>
-
-          <div class='field owner-only-field' id='media-manager' style='padding: 0 12px;'>
-            <label style='font-weight: bold; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
-              Quản lý Media
-            </label>
-            
-            <div class='field'>
-              <label>Tên hiển thị (VD: Ảnh Tết 2025)</label>
-              <input id='mediaNameInput' placeholder='Nhập tên cho ảnh/audio...'>
-            </div>
-          
-            <div class='field'>
-              <label>Chọn file để tải lên</label>
-              <input type="file" id="mediaFileInput" accept="image/*, audio/*">
-            </div>
-            
-            <div class='btn-group' style='gap: 8px;'>
-              <button class='btn' id='btnUploadImage' style='flex:1;'>Tải lên Ảnh</button>
-              <button class='btn' id='btnUploadAudio' style='flex:1;'>Tải lên Audio</button>
-            </div>
-          </div>
-          <div class='field owner-only-field' id='tree-manager' style='padding: 0 12px;'>
-            <label style='font-weight: bold; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
-              Quản lý Phả Đồ
-            </label>
-            <div class='field'>
-              <label>Tên phả đồ mới (VD: Phả đồ Họ Trần)</label>
-              <input id='newTreeNameInput' placeholder='Nhập tên phả đồ mới...'>
-            </div>
-            <button class='btn' id='btnCreateNewTree' style='width: 100%;'>Tạo Phả Đồ Mới</button>
-          </div>
-          </div>
-        <div class='hint'>
-          <b>Thiết kế:</b> Nguyễn Khánh Linh - 0985934677
-        </div>
-        <input accept='.csv,.xls,.xml,text/csv,application/vnd.ms-excel' id='fileImportCSV' style='display:none' type='file'>
-      </aside>
-   
-        <main class='panel right'>
-        <div class='topbar'>
-          <button class='btn' id='btnToggleImageAlbum' title='Mở Album Ảnh'>
-            <svg fill='none' height='20' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><rect height='18' rx='2' ry='2' width='18' x='3' y='3'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21 15 16 10 5 21'/></svg>
-            <span class='tooltip-text'>Ảnh</span>
-          </button>
-    
-           <button class='btn' id='btnToggleAudioAlbum' title='Mở Album Audio'>
-             <svg fill='none' height='20' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M9 18V5l12-2v13'/><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/></svg>
-             <span class='tooltip-text'>Audio</span>
-          </button>
-          <button class='btn' id='zoomOut'>&#8722;</button>
-          <button class='btn' id='zoomReset'>100%</button>
-         <button class='btn' id='zoomIn'>+</button>
         </div>
 
         <div class='canvas-container' id='canvas-container'>
@@ -210,24 +86,140 @@
                 </div>
               </div>
               </div>
-
-        </div>
-     
-        <div id='bottom-right-ui'>
-          <div class="button-group-wrapper">
-              <div id="search-container">
-                  <input id='search' placeholder='Nhập tên để tìm...'>
-                  <button id='btnClearSearch' title='Xóa tìm kiếm'>&#215;</button>
-                  <button class='btn' id='btnToggleSearch' title='Tìm kiếm'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  </button>
-              </div>
-              <button class='btn' id='btnFit' title='Vừa với màn hình'>
-                    <svg fill='none' height='24' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'/></svg>
-              </button>
-          </div>
         </div>
       </main>
+
+      <nav id="bottom-dock">
+        <button id="btn-menu-chuc-nang" class="dock-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          <span>Chức năng</span>
+        </button>
+        <button id="btn-menu-gia-pha" class="dock-btn main">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><path d="M18 9v12"/><path d="M3 15h18"/><path d="M14 21v-5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v5"/></svg>
+          <span>Gia phả</span>
+        </button>
+        <button id="btn-menu-cai-dat" class="dock-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Cài đặt</span>
+        </button>
+      </nav>
+
+      <div id="menu-gia-pha" class="bottom-sheet">
+        <header>
+          <h1>Gia phả</h1>
+          <button class='btn btn-close-sheet'>&times;</button>
+        </header>
+        <div class="scroll">
+          <div id="header-admin-controls" class="owner-only-field">
+            <div id='auth-container'></div>
+            <button class='btn' disabled='true' id='btnSaveChanges' style='background: var(--accent); color: white;'>Lưu Thay Đổi</button>
+          </div>
+          <div class='field' style='padding: 0 12px;'>
+            <label>Chọn Phả Đồ</label>
+            <div id='tree-selector-wrapper' style='display: flex; align-items: center; gap: 8px;'>
+              <select id='tree-selector' title='Chọn Phả Đồ' style='width: 100%;'></select>
+              <button class='btn owner-only-field' id='btnDeleteTree' title='Xóa phả đồ hiện tại' style='flex-shrink: 0; padding: 6px 10px; background-color: var(--danger); color: white;'>&times;</button>
+            </div>
+          </div>
+          <div class='field owner-only-field' id='tree-manager' style='padding: 0 12px;'>
+            <label style='font-weight: bold; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>Quản lý Phả Đồ</label>
+            <div class='field'>
+              <label>Tên phả đồ mới (VD: Phả đồ Họ Trần)</label>
+              <input id='newTreeNameInput' placeholder='Nhập tên phả đồ mới...'>
+            </div>
+            <button class='btn' id='btnCreateNewTree' style='width: 100%;'>Tạo Phả Đồ Mới</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="menu-chuc-nang" class="bottom-sheet">
+        <header>
+          <h1>Chức năng</h1>
+          <button class='btn btn-close-sheet'>&times;</button>
+        </header>
+        <div class="scroll">
+          <div class='toolbar' style="grid-template-columns: 1fr 1fr 1fr;">
+            <button class='btn' id='btnToggleImageAlbum' title='Mở Album Ảnh'><svg fill='none' height='20' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='20'><rect height='18' rx='2' ry='2' width='18' x='3' y='3'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21 15 16 10 5 21'/></svg><span>Ảnh</span></button>
+            <button class='btn' id='btnToggleAudioAlbum' title='Mở Album Audio'><svg fill='none' height='20' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' width='20'><path d='M9 18V5l12-2v13'/><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/></svg><span>Audio</span></button>
+            <button class='btn' id='btnShowStats' title='Thống kê'><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M9 20V10m6 10V4"/></svg><span>Thống kê</span></button>
+            <button class='btn owner-only-field' id='btnRoot'>+ Tạo gốc</button>
+            <button class='btn owner-only-field' id='btnUndo' title='Hoàn tác (Ctrl+Z)'>&#8630; Undo</button>
+            <button class='btn owner-only-field' id='btnRedo' title='Làm lại (Ctrl+Y)'>&#8631; Redo</button>
+            <button class='btn owner-only-field' id='btnImportCSV'>Nhập CSV/Excel</button>
+            <button class='btn' id='btnExportCSV'>Xuất CSV</button>
+            <button class='btn' id='btnExportSVG'>Xuất SVG</button>
+            <button class='btn' id='btnExportJPG'>Xuất JPG</button>
+            <button class='btn owner-only-field' id='btnReset'>Xóa sạch</button>
+          </div>
+          <div class='field' id='download-area' style='padding: 0 12px; margin-bottom: 15px;'></div>
+          <div class='field' id='stats' style='padding: 0 12px; display: none;'> <label>Thống kê theo đời</label>
+            <div id='stats-content'></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="menu-cai-dat" class="bottom-sheet">
+        <header>
+          <h1>Cài đặt</h1>
+          <button class='btn btn-close-sheet'>&times;</button>
+        </header>
+        <div class="scroll">
+          <div class='field' style='padding: 0 12px;'>
+            <label>Giao diện</label>
+            <select class='btn' id='themeSelector' style='width: 100%; padding: 10px 12px;'>
+                <option value='dark'>Mặc định - Tối</option>
+                <option value='light'>Mặc định - Sáng</option>
+                <option value='sepia'>Nâu Cổ Điển - Sáng</option>
+                <option value='deep-sea'>Biển Sâu - Tối</option>
+                <option value='slate'>Thạch Lam - Tối</option>
+            </select>
+          </div>
+          <div class='field owner-only-field' style='padding: 0 12px;'>
+            <label>URL Ảnh nền</label>
+            <div class='btn-group'>
+               <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
+               <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
+            </div>
+            <input type="file" id="fileUploadBg" accept="image/*" style="display: none;">
+            <img id="bgPreview" class="settings-preview-img" alt="Xem trước ảnh nền">
+          </div>
+          <div class='field owner-only-field' style='padding: 0 12px; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
+              <label style='font-weight: bold; margin-bottom: 8px;'>Tùy chỉnh biểu tượng</label>
+              <div class='toggle-wrapper' style='display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;'>
+                  <span>Hiển thị biểu tượng</span>
+                  <label class='toggle'>
+                    <input checked='true' id='toggleDecoration' type='checkbox'>
+                  </label>
+              </div>
+              <label>URL Biểu tượng</label>
+              <div class='btn-group'>
+                <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
+                <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
+              </div>
+              <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
+              <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
+              <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
+              <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
+              <label style='margin-top: 8px;'>Khoảng cách dọc (<span id='decorationDistanceLabel'>85</span>px)</label>
+              <input id='decorationDistanceSlider' max='2500' min='20' style='width:100%' type='range' value='85'>
+          </div>
+          <div class='field owner-only-field' id='media-manager' style='padding: 0 12px;'>
+            <label style='font-weight: bold; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>Quản lý Media</label>
+            <div class='field'>
+              <label>Tên hiển thị (VD: Ảnh Tết 2025)</label>
+              <input id='mediaNameInput' placeholder='Nhập tên cho ảnh/audio...'>
+            </div>
+            <div class='field'>
+              <label>Chọn file để tải lên</label>
+              <input type="file" id="mediaFileInput" accept="image/*, audio/*">
+            </div>
+            <div class='btn-group' style='gap: 8px;'>
+              <button class='btn' id='btnUploadImage' style='flex:1;'>Tải lên Ảnh</button>
+              <button class='btn' id='btnUploadAudio' style='flex:1;'>Tải lên Audio</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <aside class='panel media-sidebar' id='image-sidebar'>
           <header>
@@ -235,7 +227,7 @@
                   <h1>Album Hình Ảnh</h1>
                   <div class='sub'>Hình ảnh dòng họ</div>
               </div>
-              <button class='btn' id='btnCloseImage' title='Đóng'>&#215;</button>
+              <button class='btn' id='btnCloseImage' title='Đóng'>&times;</button>
           </header>
           <div class='scroll'>
               <div class='media-section'>
@@ -251,7 +243,7 @@
                   <h1>Album Âm Thanh</h1>
                   <div class='sub'>Audio Lịch sử dòng họ</div>
               </div>
-              <button class='btn' id='btnCloseAudio' title='Đóng'>&#215;</button>
+              <button class='btn' id='btnCloseAudio' title='Đóng'>&times;</button>
           </header>
           <div class='scroll'>
                  <div class='media-section'>
@@ -311,6 +303,3 @@
 </body>
 
 </html>
-
-
-
