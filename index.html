@@ -63,6 +63,7 @@
                <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
             </div>
             <input type="file" id="fileUploadBg" accept="image/*" style="display: none;">
+            <img id="bgPreview" class="settings-preview-img" alt="Xem trước ảnh nền">
             </div>
 
           <div class='field' style='padding: 0 12px;'>
@@ -97,6 +98,7 @@
                 <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
               </div>
               <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
+              <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
               <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
               <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
               
@@ -306,3 +308,4 @@
 </body>
 
 </html>
+
