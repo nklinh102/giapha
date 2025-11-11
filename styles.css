@@ -729,3 +729,31 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 .settings-preview-img[src] {
   display: block; 
 }
+/* ===== SỬA GIAO DIỆN ADMIN (MỚI) ===== */
+
+/* 1. Chia toolbar (các nút chức năng) thành 3 cột */
+.toolbar {
+  grid-template-columns: 1fr 1fr 1fr; /* 3 cột */
+}
+
+/* 2. Xóa style cũ của nút Save (vì nó không còn trong grid nữa) */
+.toolbar #btnSaveChanges {
+  grid-column: auto; /* Xóa style cũ */
+}
+
+/* 3. Căn chỉnh header mới (Nơi chứa "Xin chào" và "Lưu Thay Đổi") */
+#header-admin-controls {
+  display: flex;
+  justify-content: space-between; /* Đẩy 2 item ra 2 bên */
+  align-items: center;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+/* 4. Đảm bảo nút "Lưu" có kích thước hợp lý */
+#header-admin-controls #btnSaveChanges {
+  flex-shrink: 0; /* Không bị co lại */
+  padding: 8px 12px; /* Nút nhỏ hơn một chút */
+  width: auto; /* Tự động co dãn theo chữ */
+}
+/* ===== KẾT THÚC SỬA GIAO DIỆN ===== */
