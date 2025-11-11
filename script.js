@@ -1895,6 +1895,34 @@ async function handleDeleteTree() {
   });
 }
 
+// ===================================================================
+// ====== CHỨC NĂNG MỚI: TẢI LÊN ẢNH NỀN / BIỂU TƯỢNG ======
+// ===================================================================
+async function handleSimpleUpload(file, targetFolder, buttonElement) {
+  const formData = new FormData();
+  formData.append('file', file, file.name);
+  formData.append('targetFolder', targetFolder); // e.g., 'media/backgrounds'
+
+  const originalBtnText = buttonElement.textContent;
+  buttonElement.disabled = true;
+  buttonElement.textContent = 'Đang tải...';
+
+  try {
+    const { success, data } = await callAdminFunction('upload-media', formData, true);
+    if (!success || !data.url) {
+      throw new Error(data.message || 'Lỗi không xác định khi tải file.');
+    }
+    return data.url; // Trả về URL
+  } catch (err) {
+    alert(`Lỗi khi tải file: ${err.message}`);
+    console.error('Lỗi handleSimpleUpload:', err);
+    return null; // Trả về null nếu lỗi
+  } finally {
+    buttonElement.disabled = false;
+    buttonElement.textContent = originalBtnText;
+  }
+}
+
 
 function init() {
   // 1) Gắn sự kiện UI
@@ -1969,6 +1997,47 @@ function init() {
   $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true));
   $('#appTitle').addEventListener('blur', () => { if (isOwner) setUnsavedChanges(true); });
 
+  // === THÊM MỚI: Logic cho nút Tải lên Ảnh Nền ===
+  const fileUploadBg = $('#fileUploadBg');
+  $('#btnUploadBg').onclick = () => fileUploadBg.click();
+  fileUploadBg.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const newUrl = await handleSimpleUpload(file, 'media/backgrounds', $('#btnUploadBg'));
+    
+    if (newUrl) {
+      const bgInput = $('#bgUrlInput');
+      bgInput.value = newUrl;
+      canvasContainer.style.backgroundImage = `url(${newUrl})`;
+      setUnsavedChanges(true);
+      alert('Đã tải lên ảnh nền. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
+    }
+    fileUploadBg.value = ''; // Reset
+  };
+
+  // === THÊM MỚI: Logic cho nút Tải lên Biểu Tượng ===
+  const fileUploadDeco = $('#fileUploadDeco');
+  $('#btnUploadDeco').onclick = () => fileUploadDeco.click();
+  fileUploadDeco.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const newUrl = await handleSimpleUpload(file, 'media/decorations', $('#btnUploadDeco'));
+
+    if (newUrl) {
+      const decoInput = $('#decorationUrlInput');
+      decoInput.value = newUrl;
+      decorationSettings.url = newUrl;
+      treeDecoration.src = newUrl;
+      setUnsavedChanges(true);
+      scheduleRender();
+      alert('Đã tải lên biểu tượng. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
+    }
+    fileUploadDeco.value = ''; // Reset
+  };
+  // ===============================================
+
   const decorationSizeSlider = $('#decorationSizeSlider'), decorationSizeLabel = $('#decorationSizeLabel');
   const decorationDistanceSlider = $('#decorationDistanceSlider'), decorationDistanceLabel = $('#decorationDistanceLabel');
   updateControlsUI();
@@ -1980,7 +2049,7 @@ function init() {
   const imageSidebar = $('#image-sidebar'), audioSidebar = $('#audio-sidebar'), globalAudioPlayer = $('#global-audio-player');
   const closeAllMediaSidebars = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.remove('show'); overlay.classList.remove('show-for-media'); };
   $('#btnToggleImageAlbum').onclick = () => { audioSidebar.classList.remove('show'); imageSidebar.classList.toggle('show'); if (imageSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
-  $('#btnToggleAudioAlbum').onclick = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
+  $('#btnToggleAudioAlbum').onclick = () => { audioSidebar.classList.remove('show'); audioSidebar.classList.toggle('show'); if (audioSidebar.classList.contains('show')) overlay.classList.add('show-for-media'); else overlay.classList.remove('show-for-media'); };
   $('#btnCloseImage').onclick = () => { imageSidebar.classList.remove('show'); if (!audioSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   $('#btnCloseAudio').onclick = () => { audioSidebar.classList.remove('show'); if (!imageSidebar.classList.contains('show')) overlay.classList.remove('show-for-media'); };
   
@@ -1997,7 +2066,7 @@ function init() {
   $('#btnUploadImage').onclick = () => handleMediaUpload('image');
   $('#btnUploadAudio').onclick = () => handleMediaUpload('audio');
   $('#btnCreateNewTree').onclick = handleCreateNewTree;
-  $('#btnDeleteTree').onclick = handleDeleteTree; // <-- THÊM DÒNG NÀY
+  $('#btnDeleteTree').onclick = handleDeleteTree;
   // ==============================
 
   $('#media-close').onclick = () => $('#media-viewer').classList.remove('show');
