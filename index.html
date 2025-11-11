@@ -38,10 +38,13 @@
         <header>
           <h1>Bảng điều khiển</h1>
           <div class='sub'>Tùy chỉnh và quản lý sơ đồ</div>
+          <div id="header-admin-controls" class="owner-only-field">
           <div id='auth-container' style='padding-top: 10px; font-size: 13px;'></div>
+            
+              <button class='btn owner-only-field' disabled='true' id='btnSaveChanges' style='background: var(--accent); color: white;'>Lưu Thay Đổi</button>
+            </div>
         </header>
         <div class='toolbar'>
-          <button class='btn owner-only-field' disabled='true' id='btnSaveChanges' style='grid-column: 1 / -1; background: var(--accent); color: white;'>Lưu Thay Đổi</button>
           <button class='btn owner-only-field' id='btnRoot'>+ Tạo gốc</button>
           <button class='btn owner-only-field' id='btnUndo' title='Hoàn tác (Ctrl+Z)'>&#8630; Undo</button>
           <button class='btn owner-only-field' id='btnRedo' title='Làm lại (Ctrl+Y)'>&#8631; Redo</button>
@@ -308,4 +311,5 @@
 </body>
 
 </html>
+
 
