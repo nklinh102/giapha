@@ -28,6 +28,7 @@
         <select id='tree-selector' title='Chọn Phả Đồ' style='width: 100%;'></select>
         <button class='btn owner-only-field' id='btnDeleteTree' title='Xóa phả đồ hiện tại' style='flex-shrink: 0; padding: 6px 10px; background-color: var(--danger); color: white;'>&times;</button>
       </div>
+
       <h1 id='appTitle'>SƠ ĐỒ GIA PHẢ</h1>
     </header>
     <div class='app sidebar-collapsed'>
@@ -58,9 +59,11 @@
           <div class='field owner-only-field' style='padding: 0 12px;'>
             <label>URL Ảnh nền</label>
             <div class='btn-group'>
-               <input id='bgUrlInput' placeholder='Dán link ảnh mới vào đây...' style='flex:1; width: 100%;'>
+               <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
+               <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
             </div>
-          </div>
+            <input type="file" id="fileUploadBg" accept="image/*" style="display: none;">
+            </div>
 
           <div class='field' style='padding: 0 12px;'>
               <label>Giao diện</label>
@@ -89,8 +92,11 @@
               </div>
 
               <label>URL Biểu tượng</label>
-              <input id='decorationUrlInput' placeholder='Dán link ảnh mới vào đây...' style='width:100%; margin-bottom: 12px;' type='text'>
-
+              <div class='btn-group'>
+                <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
+                <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
+              </div>
+              <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
               <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
               <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
               
