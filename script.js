@@ -93,7 +93,18 @@ function slugify(text) {
     .replace(/-+/g, '-') // Xóa các dấu - thừa
     .replace(/^-+|-+$/g, ''); // Xóa dấu - ở đầu/cuối
 }
-
+// === THÊM MỚI: Hàm cập nhật ảnh xem trước ===
+function updatePreview(imgElement, url) {
+  if (imgElement) {
+    if (url) {
+      imgElement.src = url;
+      imgElement.style.display = 'block';
+    } else {
+      imgElement.src = ''; // Quan trọng: xóa src nếu url rỗng
+      imgElement.style.display = 'none';
+    }
+  }
+}
 function setUnsavedChanges(isDirty) {
   hasUnsavedChanges = isDirty;
   const saveBtn = $('#btnSaveChanges');
@@ -371,7 +382,7 @@ async function loadInitialData() {
   // để nó luôn chạy, kể cả khi file db.json bị 404
   try {
     const settings = globalSettings.settings || {};
-    if (settings.bg_url) { canvasContainer.style.backgroundImage = `url(${settings.bg_url})`; $('#bgUrlInput').value = settings.bg_url; }
+    if (settings.bg_url) { canvasContainer.style.backgroundImage = `url(${settings.bg_url})`; $('#bgUrlInput').value = settings.bg_url; updatePreview($('#bgPreview'), settings.bg_url); }
     gapX = parseInt(settings.gap_x, 10) || 40; $('#gapXSlider').value = gapX; $('#gapValueLabel').textContent = gapX;
     const centralTitle = settings.tree_title || 'Sơ Đồ Gia Phả';
     savedTitle = centralTitle; appTitle.textContent = centralTitle; document.title = centralTitle;
@@ -380,6 +391,7 @@ async function loadInitialData() {
     decorationSettings.distance = parseInt(settings.decoration_distance, 10) || 85;
     decorationSettings.url      = settings.decoration_url || 'https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/images/Cuonthu.png';
     treeDecoration.src = decorationSettings.url;
+    updatePreview($('#decoPreview'), decorationSettings.url);
     updateControlsUI();
 
     // === SỬA LỖI: Đảm bảo media luôn là object ===
@@ -1994,7 +2006,7 @@ function init() {
   const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
   applyTheme(savedTheme);
 
-  $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true));
+  $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true)); updatePreview($('#bgPreview'), $('#bgUrlInput').value.trim());
   $('#appTitle').addEventListener('blur', () => { if (isOwner) setUnsavedChanges(true); });
 
   // === THÊM MỚI: Logic cho nút Tải lên Ảnh Nền ===
@@ -2011,6 +2023,7 @@ function init() {
       bgInput.value = newUrl;
       canvasContainer.style.backgroundImage = `url(${newUrl})`;
       setUnsavedChanges(true);
+      updatePreview($('#bgPreview'), newUrl);
       alert('Đã tải lên ảnh nền. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
     }
     fileUploadBg.value = ''; // Reset
@@ -2032,6 +2045,7 @@ function init() {
       treeDecoration.src = newUrl;
       setUnsavedChanges(true);
       scheduleRender();
+      updatePreview($('#decoPreview'), newUrl);
       alert('Đã tải lên biểu tượng. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
     }
     fileUploadDeco.value = ''; // Reset
@@ -2044,7 +2058,7 @@ function init() {
   $('#toggleDecoration').onchange = (e) => { decorationSettings.visible = e.target.checked; setUnsavedChanges(true); scheduleRender(); };
   decorationSizeSlider.addEventListener('input', (e) => { decorationSettings.size = parseInt(e.target.value, 10); decorationSizeLabel.textContent = decorationSettings.size; setUnsavedChanges(true); scheduleRender(); });
   decorationDistanceSlider.addEventListener('input', (e) => { decorationSettings.distance = parseInt(e.target.value, 10); decorationDistanceLabel.textContent = decorationSettings.distance; setUnsavedChanges(true); scheduleRender(); });
-  $('#decorationUrlInput').addEventListener('input', (e) => { decorationSettings.url = e.target.value; treeDecoration.src = e.target.value; setUnsavedChanges(true); });
+  $('#decorationUrlInput').addEventListener('input', (e) => { decorationSettings.url = e.target.value; treeDecoration.src = e.target.value; setUnsavedChanges(true); updatePreview($('#decoPreview'), e.target.value); });
 
   const imageSidebar = $('#image-sidebar'), audioSidebar = $('#audio-sidebar'), globalAudioPlayer = $('#global-audio-player');
   const closeAllMediaSidebars = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.remove('show'); overlay.classList.remove('show-for-media'); };
