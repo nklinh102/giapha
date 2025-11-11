@@ -445,7 +445,7 @@ async function loadTreeData(fileName) {
     console.error('Lỗi khi tải dữ liệu:', e);
     
     // === SỬA LỖI: Chỉ báo lỗi 404 lần đầu, không spam alert ===
-    if (!globalSettings.settings) { // Chỉ báo lỗi nếu đây là lần tải đầu tiên (globalSettings rỗng)
+    if (Object.keys(globalSettings).length === 0) { // Chỉ báo lỗi nếu đây là lần tải đầu tiên (globalSettings rỗng)
       alert('Không thể tải phả đồ hoặc đề xuất. Có thể file chưa được tạo.');
     } else {
       console.warn('Không tìm thấy file tree hoặc proposals, sẽ tạo file trống.');
