@@ -312,6 +312,10 @@ async function saveAllChanges() {
 async function uploadImageToR2(file) {
   const formData = new FormData();
   formData.append('file', file, file.name);
+  
+  // === THÊM MỚI: Gửi đúng thư mục cho avatar ===
+  formData.append('targetFolder', 'media/avatars');
+  // ==========================================
 
   const saveBtn = $('#mSave');
   const originalBtnText = saveBtn.textContent;
@@ -1148,6 +1152,7 @@ function getGiap(node) {
 // ===================================================================
 // ====== IMPORT/EXPORT (ĐÃ SỬA LỖI TẢI FILE) ======
 // ===================================================================
+
 // (Hàm download() cũ đã bị xóa)
 
 function toCSV() {
@@ -1687,8 +1692,14 @@ async function handleMediaUpload(mediaType) {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    // Chúng ta không dùng hàm uploadImageToR2() cũ vì nó bị
-    // ràng buộc vào modal. Chúng ta gọi trực tiếp callAdminFunction.
+    // === THÊM MỚI: Gửi đúng thư mục ===
+    if (mediaType === 'image') {
+      formData.append('targetFolder', 'media/images');
+    } else {
+      formData.append('targetFolder', 'media/audios');
+    }
+    // =================================
+    
     const { success, data: uploadData } = await callAdminFunction('upload-media', formData, true);
 
     if (!success || !uploadData.url) {
