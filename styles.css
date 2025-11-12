@@ -809,3 +809,15 @@ body:not(.owner-mode) .thumbnail-option:not(.active):hover {
   transform: scale(1.02);
 }
 /* ===== KẾT THÚC CẬP NHẬT: CSS CHO THUMBNAIL ===== */
+
+
+/* ===== BẮT ĐẦU CẬP NHẬT: Ẩn các trường input, label và preview ===== */
+.owner-mode #bg-input-label,
+.owner-mode #deco-input-label,
+.owner-mode #bgUrlInput,
+.owner-mode #decorationUrlInput,
+#bgPreview,
+#decoPreview {
+    display: none !important;
+}
+/* ===== KẾT THÚC CẬP NHẬT ===== */
