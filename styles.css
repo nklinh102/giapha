@@ -762,7 +762,8 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     width: 100% !important; /* Đảm bảo nút đăng xuất cũng rộng 100% */
 }
 /* ===== KẾT THÚC SỬA GIAO DIỆN ===== */
-/* ===== CSS MỚI CHO THUMBNAIL PRESET ===== */
+
+/* ===== BẮT ĐẦU CẬP NHẬT: CSS CHO THUMBNAIL ===== */
 .preset-thumbnails {
   display: flex;
   gap: 10px;
@@ -779,7 +780,7 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: all 0.2s ease;
   flex-shrink: 0;
   position: relative;
-  background-color: var(--bg); /* Thêm màu nền cho thumbnail */
+  background-color: var(--bg); /* Nền cho thumbnail */
 }
 
 .thumbnail-option img {
@@ -796,9 +797,15 @@ font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transform: scale(1.05);
 }
 
-/* Hiệu ứng khi hover */
-.thumbnail-option:not(.active):hover {
+/* Hiệu ứng khi hover (Admin) */
+.owner-mode .thumbnail-option:not(.active):hover {
+  border-color: var(--warning); /* Màu vàng để báo Admin có thể sửa */
+  transform: scale(1.02);
+}
+
+/* Hiệu ứng khi hover (User) */
+body:not(.owner-mode) .thumbnail-option:not(.active):hover {
   border-color: var(--muted);
   transform: scale(1.02);
 }
-/* ===== KẾT THÚC CSS MỚI ===== */
+/* ===== KẾT THÚC CẬP NHẬT: CSS CHO THUMBNAIL ===== */
