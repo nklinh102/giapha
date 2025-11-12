@@ -59,15 +59,22 @@
           <div class='field' id='download-area' style='padding: 0 12px; margin-bottom: 15px;'>
             </div>
 
-          <div class='field owner-only-field' style='padding: 0 12px;'>
-            <label>URL Ảnh nền</label>
-            <div class='btn-group'>
-               <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
-               <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
+          <div class='field' style='padding: 0 12px;'>
+            <label>Ảnh nền</label>
+            <div id='bg-thumbnail-container' class='preset-thumbnails'>
+                </div>
+            
+            <div class="owner-only-field" style="display: flex; flex-direction: column; gap: 6px;">
+                <label>...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
+                <div class='btn-group'>
+                   <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
+                   <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
+                </div>
             </div>
             <input type="file" id="fileUploadBg" accept="image/*" style="display: none;">
+            
             <img id="bgPreview" class="settings-preview-img" alt="Xem trước ảnh nền">
-            </div>
+          </div>
 
           <div class='field' style='padding: 0 12px;'>
               <label>Giao diện</label>
@@ -85,7 +92,7 @@
             <input id='gapXSlider' max='150' min='10' style='width:100%' type='range' value='40'>
           </div>
 
-          <div class='field owner-only-field' style='padding: 0 12px; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
+          <div class='field' style='padding: 0 12px; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;'>
               <label style='font-weight: bold; margin-bottom: 8px;'>Tùy chỉnh biểu tượng</label>
               
               <div class='toggle-wrapper' style='display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;'>
@@ -95,18 +102,26 @@
                   </label>
               </div>
 
-              <label>URL Biểu tượng</label>
-              <div class='btn-group'>
-                <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
-                <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
+              <label>Chọn biểu tượng</label>
+              <div id='deco-thumbnail-container' class='preset-thumbnails'>
+                  </div>
+
+              <div class="owner-only-field" style="display: flex; flex-direction: column; gap: 6px;">
+                  <label>...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
+                  <div class='btn-group'>
+                    <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
+                    <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
+                  </div>
+                  <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
+                  
+                  <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
+                  <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
+                  
+                  <label style='margin-top: 8px;'>Khoảng cách dọc (<span id='decorationDistanceLabel'>85</span>px)</label>
+                  <input id='decorationDistanceSlider' max='2500' min='20' style='width:100%' type='range' value='85'>
               </div>
-              <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
-              <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
-              <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
-              <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
               
-              <label style='margin-top: 8px;'>Khoảng cách dọc (<span id='decorationDistanceLabel'>85</span>px)</label>
-              <input id='decorationDistanceSlider' max='2500' min='20' style='width:100%' type='range' value='85'>
+              <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
           </div>
    
             <div class='field' id='stats' style='padding: 0 12px;'>
@@ -311,4 +326,5 @@
 </body>
 
 </html>
+
 
