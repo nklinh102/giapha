@@ -59,8 +59,10 @@ display: flex; flex-direction: column; transition: background .3s, color .3s;}
 padding: 0 12px; height: var(--header-height); background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 #app-header h1 {
-  font-family: 'Jaro', sans-serif;
-  font-weight: normal;
+  font-family: "Jaro", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
   font-size: 32px;
   text-align: center;
   text-transform: uppercase;
