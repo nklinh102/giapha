@@ -58,6 +58,7 @@ display: flex; flex-direction: column; transition: background .3s, color .3s;}
 #app-header { display: flex; align-items: center;
 padding: 0 12px; height: var(--header-height); background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
+/* ===== CẬP NHẬT FONT CHỮ ===== */
 #app-header h1 {
   font-family: 'Jaro', sans-serif;
   font-weight: normal;
@@ -819,5 +820,10 @@ body:not(.owner-mode) .thumbnail-option:not(.active):hover {
 #bgPreview,
 #decoPreview {
     display: none !important;
+}
+
+/* Căn chỉnh lại nút Tải lên (cho vừa) */
+.owner-mode .btn-group {
+    justify-content: flex-end; /* Đẩy nút "Tải lên" về phía bên phải */
 }
 /* ===== KẾT THÚC CẬP NHẬT ===== */
