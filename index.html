@@ -65,7 +65,7 @@
                 </div>
             
             <div class="owner-only-field" style="display: flex; flex-direction: column; gap: 6px;">
-                <label>...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
+                <label id="bg-input-label">...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
                 <div class='btn-group'>
                    <input id='bgUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='flex:1; width: 100%;'>
                    <button class='btn' id='btnUploadBg' style='flex-shrink: 0;'>Tải lên</button>
@@ -75,7 +75,6 @@
             
             <img id="bgPreview" class="settings-preview-img" alt="Xem trước ảnh nền">
           </div>
-
           <div class='field' style='padding: 0 12px;'>
               <label>Giao diện</label>
               <select class='btn' id='themeSelector' style='width: 100%; padding: 10px 12px;'>
@@ -107,12 +106,15 @@
                   </div>
 
               <div class="owner-only-field" style="display: flex; flex-direction: column; gap: 6px;">
-                  <label>...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
+                  <label id="deco-input-label">...hoặc Tải lên/Dán URL (Chỉ Admin)</label>
                   <div class='btn-group'>
                     <input id='decorationUrlInput' placeholder='Dán link ảnh hoặc bấm Tải lên...' style='width:100%;' type='text'>
                     <button class='btn' id='btnUploadDeco' style='flex-shrink: 0;'>Tải lên</button>
                   </div>
                   <input type="file" id="fileUploadDeco" accept="image/*" style="display: none;">
+                  
+                  <input type="file" id="fileUploadBgPreset" accept="image/*" style="display: none;">
+                  <input type="file" id="fileUploadDecoPreset" accept="image/*" style="display: none;">
                   
                   <label>Kích thước (<span id='decorationSizeLabel'>150</span>px)</label>
                   <input id='decorationSizeSlider' max='2500' min='50' style='width:100%' type='range' value='150'>
@@ -123,8 +125,7 @@
               
               <img id="decoPreview" class="settings-preview-img" alt="Xem trước biểu tượng">
           </div>
-   
-            <div class='field' id='stats' style='padding: 0 12px;'>
+          <div class='field' id='stats' style='padding: 0 12px;'>
             <label>Thống kê theo đời</label>
             <div id='stats-content'></div>
           </div>
@@ -326,5 +327,3 @@
 </body>
 
 </html>
-
-
