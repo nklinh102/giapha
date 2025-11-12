@@ -288,6 +288,9 @@ async function saveAllChanges() {
   globalSettings.settings.decoration_size = decorationSettings.size;
   globalSettings.settings.decoration_distance = decorationSettings.distance;
   globalSettings.settings.decoration_url = decorationSettings.url;
+  
+  // === QUAN TRỌNG: Các mảng preset đã được cập nhật trực tiếp trong globalSettings ===
+  // (Không cần thêm code ở đây)
 
   const saveBtn = $('#btnSaveChanges');
   saveBtn.textContent = 'Đang lưu...';
@@ -382,6 +385,28 @@ async function loadInitialData() {
   // để nó luôn chạy, kể cả khi file db.json bị 404
   try {
     const settings = globalSettings.settings || {};
+    
+    // ===== BẮT ĐẦU CẬP NHẬT =====
+    // Tạo preset mặc định nếu chưa có trong db.json
+    // QUAN TRỌNG: Bạn phải tự thay thế các URL placeholder bên dưới
+    if (!settings.bg_presets || !Array.isArray(settings.bg_presets) || settings.bg_presets.length === 0) {
+      settings.bg_presets = [
+        { name: 'Nền Tối (Mặc định)', url: 'https://pub-680f37ef25704fc58bf37caad665e004.r2.dev/media/anhnen.jpg' },
+        { name: 'Nền Sáng (Mặc định)', url: 'URL_ANH_NEN_SANG_CUA_BAN' },
+        { name: 'Nền Giấy Cũ (Mặc định)', url: 'URL_ANH_NEN_GIAY_CU_CUA_BAN' }
+      ];
+    }
+    if (!settings.deco_presets || !Array.isArray(settings.deco_presets) || settings.deco_presets.length === 0) {
+      settings.deco_presets = [
+        { name: 'Cuốn Thư (Mặc định)', url: 'https://pub-680f37ef25704fc58bf37caad665e004.r2.dev/media/Cuonthu.png' },
+        { name: 'Trống Đồng (Mặc định)', url: 'URL_TRONG_DONG_CUA_BAN' },
+        { name: 'Hoa Sen (Mặc định)', url: 'URL_HOA_SEN_CUA_BAN' }
+      ];
+    }
+    // Gán lại vào globalSettings để đảm bảo nó tồn tại
+    globalSettings.settings = settings;
+    // ===== KẾT THÚC CẬP NHẬT =====
+
     if (settings.bg_url) { canvasContainer.style.backgroundImage = `url(${settings.bg_url})`; $('#bgUrlInput').value = settings.bg_url; updatePreview($('#bgPreview'), settings.bg_url); }
     gapX = parseInt(settings.gap_x, 10) || 40; $('#gapXSlider').value = gapX; $('#gapValueLabel').textContent = gapX;
     const centralTitle = settings.tree_title || 'Sơ Đồ Gia Phả';
@@ -392,6 +417,9 @@ async function loadInitialData() {
     decorationSettings.url      = settings.decoration_url || 'https://cdn.jsdelivr.net/gh/nklinh102/gia-pha-files@main/images/Cuonthu.png';
     treeDecoration.src = decorationSettings.url;
     updatePreview($('#decoPreview'), decorationSettings.url);
+
+    // === CẬP NHẬT: Gọi hàm tạo thumbnail ===
+    populatePresetPickers();
     updateControlsUI();
 
     // === SỬA LỖI: Đảm bảo media luôn là object ===
@@ -1653,6 +1681,8 @@ function updateControlsUI() {
     decorationDistanceLabel.textContent = decorationSettings.distance;
     decorationUrlInput.value = decorationSettings.url;
   }
+  
+  syncPickersToInputs(); // <-- CẬP NHẬT: Đổi tên hàm
 }
 function generateHierarchicalId(parent) {
   if (!parent || !parent.id) return '1';
@@ -1935,12 +1965,143 @@ async function handleSimpleUpload(file, targetFolder, buttonElement) {
   }
 }
 
+// ===== BẮT ĐẦU CẬP NHẬT: Thay thế các hàm này =====
+
+/**
+ * MỚI: Đồng bộ giá trị của Input (Admin) vào Thumbnail.
+ * Tìm thumbnail khớp với URL và thêm class 'active'.
+ */
+function syncPickersToInputs() {
+  const bgInput = $('#bgUrlInput');
+  const decoInput = $('#decorationUrlInput');
+  let isBgPreset = false;
+  let isDecoPreset = false;
+
+  // Xử lý Ảnh Nền
+  if (bgInput && bgInput.value) {
+    const currentBgUrl = bgInput.value.trim();
+    $$('#bg-thumbnail-container .thumbnail-option').forEach(thumb => {
+      if (thumb.dataset.url === currentBgUrl) {
+        thumb.classList.add('active');
+        isBgPreset = true; // Nó khớp với một preset
+      } else {
+        thumb.classList.remove('active');
+      }
+    });
+  }
+  
+  // Cập nhật tiêu đề input của Admin
+  const bgInputLabel = $('#bg-input-label');
+  if (bgInputLabel) {
+    bgInputLabel.textContent = isBgPreset ? '...hoặc Tải lên/Dán URL (Chỉ Admin)' : 'Tùy chỉnh (Admin):';
+  }
+
+  // Xử lý Biểu Tượng
+  if (decoInput && decoInput.value) {
+    const currentDecoUrl = decoInput.value.trim();
+    $$('#deco-thumbnail-container .thumbnail-option').forEach(thumb => {
+      if (thumb.dataset.url === currentDecoUrl) {
+        thumb.classList.add('active');
+        isDecoPreset = true; // Khớp với preset
+      } else {
+        thumb.classList.remove('active');
+      }
+    });
+  }
+  
+  // Cập nhật tiêu đề input của Admin
+  const decoInputLabel = $('#deco-input-label');
+  if (decoInputLabel) {
+    decoInputLabel.textContent = isDecoPreset ? '...hoặc Tải lên/Dán URL (Chỉ Admin)' : 'Tùy chỉnh (Admin):';
+  }
+}
+
+/**
+ * MỚI: Tạo các thumbnail và gán sự kiện click.
+ * Logic click sẽ khác nhau cho Admin và User.
+ */
+function populatePresetPickers() {
+  const bgContainer = $('#bg-thumbnail-container');
+  const decoContainer = $('#deco-thumbnail-container');
+  const bgPresetInput = $('#fileUploadBgPreset');
+  const decoPresetInput = $('#fileUploadDecoPreset');
+
+  // 1. Tạo Thumbnail Ảnh Nền
+  if (bgContainer && globalSettings.settings.bg_presets) {
+    bgContainer.innerHTML = ''; // Xóa nội dung cũ
+    
+    globalSettings.settings.bg_presets.forEach((preset, index) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'thumbnail-option';
+      thumb.title = isOwner ? `(Admin) Nhấn để THAY THẾ preset: ${preset.name}` : `Chọn: ${preset.name}`;
+      thumb.dataset.url = preset.url;
+      thumb.innerHTML = `<img src="${preset.url}" alt="${preset.name}">`;
+      
+      thumb.addEventListener('click', () => {
+        if (isOwner) {
+          // ADMIN: Kích hoạt file input để THAY THẾ
+          bgPresetInput.value = ''; // Reset input
+          bgPresetInput.dataset.presetIndex = index; // Lưu index để biết thay thế cái nào
+          bgPresetInput.click(); // Mở hộp thoại file
+        } else {
+          // USER: CHỌN preset này
+          $('#bgUrlInput').value = preset.url;
+          canvasContainer.style.backgroundImage = `url(${preset.url})`;
+          updatePreview($('#bgPreview'), preset.url);
+          setUnsavedChanges(true); // User cũng có thể lưu thay đổi này
+          syncPickersToInputs();
+        }
+      });
+      bgContainer.appendChild(thumb);
+    });
+  }
+
+  // 2. Tạo Thumbnail Biểu Tượng
+  if (decoContainer && globalSettings.settings.deco_presets) {
+    decoContainer.innerHTML = '';
+    
+    globalSettings.settings.deco_presets.forEach((preset, index) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'thumbnail-option';
+      thumb.title = isOwner ? `(Admin) Nhấn để THAY THẾ preset: ${preset.name}` : `Chọn: ${preset.name}`;
+      thumb.dataset.url = preset.url;
+      thumb.innerHTML = `<img src="${preset.url}" alt="${preset.name}">`;
+      
+      thumb.addEventListener('click', () => {
+        if (isOwner) {
+          // ADMIN: Kích hoạt file input
+          decoPresetInput.value = '';
+          decoPresetInput.dataset.presetIndex = index;
+          decoPresetInput.click();
+        } else {
+          // USER: CHỌN preset
+          $('#decorationUrlInput').value = preset.url;
+          decorationSettings.url = preset.url;
+          treeDecoration.src = preset.url;
+          updatePreview($('#decoPreview'), preset.url);
+          setUnsavedChanges(true); // User cũng có thể lưu
+          scheduleRender();
+          syncPickersToInputs();
+        }
+      });
+      decoContainer.appendChild(thumb);
+    });
+  }
+
+  // Đồng bộ với giá trị input (nếu đã được tải)
+  syncPickersToInputs();
+}
+// ===== KẾT THÚC CẬP NHẬT =====
+
 
 function init() {
   // 1) Gắn sự kiện UI
   new ResizeObserver(scheduleRender).observe(canvasContainer);
   treeCanvas.addEventListener('click', handleCanvasClick);
   treeCanvas.addEventListener('mousemove', handleCanvasMouseMove);
+  
+  // GỌI HÀM NÀY BÊN TRONG loadInitialData
+  // populatePresetPickers(); // <-- Xóa ở đây
 
   const overlay = $('#overlay');
   const toggleSidebar = () => app.classList.toggle('sidebar-collapsed');
@@ -2001,12 +2162,81 @@ function init() {
     panX = pX - wX * newScale; panY = pY - wY * newScale; scale = newScale;
     $('#zoomReset').textContent = Math.round(scale * 100) + '%'; scheduleRender();
   });
+  
+  // ===== BẮT ĐẦU CẬP NHẬT: Thêm listener cho các input ẩn =====
+  const bgPresetInput = $('#fileUploadBgPreset');
+  bgPresetInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    const indexToUpdate = parseInt(bgPresetInput.dataset.presetIndex, 10);
+    if (!file || isNaN(indexToUpdate)) return;
+
+    // Dùng nút upload có sẵn để hiển thị "Đang tải..."
+    const btnUploadBg = $('#btnUploadBg');
+    const newUrl = await handleSimpleUpload(file, 'media/backgrounds', btnUploadBg);
+    
+    if (newUrl) {
+      // 1. Cập nhật data trong globalSettings
+      globalSettings.settings.bg_presets[indexToUpdate].url = newUrl;
+      // (Tùy chọn: cập nhật cả tên)
+      // globalSettings.settings.bg_presets[indexToUpdate].name = file.name; 
+      
+      // 2. Cập nhật UI (vẽ lại thumbnail)
+      populatePresetPickers();
+      
+      // 3. Tự động chọn cái vừa tải lên
+      $('#bgUrlInput').value = newUrl;
+      canvasContainer.style.backgroundImage = `url(${newUrl})`;
+      updatePreview($('#bgPreview'), newUrl);
+      syncPickersToInputs(); // Đánh dấu 'active'
+      
+      // 4. Báo lưu
+      setUnsavedChanges(true);
+      alert('Đã thay thế preset. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
+    }
+    bgPresetInput.value = ''; // Reset
+  };
+
+  const decoPresetInput = $('#fileUploadDecoPreset');
+  decoPresetInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    const indexToUpdate = parseInt(decoPresetInput.dataset.presetIndex, 10);
+    if (!file || isNaN(indexToUpdate)) return;
+
+    const btnUploadDeco = $('#btnUploadDeco');
+    const newUrl = await handleSimpleUpload(file, 'media/decorations', btnUploadDeco);
+    
+    if (newUrl) {
+      // 1. Cập nhật data
+      globalSettings.settings.deco_presets[indexToUpdate].url = newUrl;
+      
+      // 2. Cập nhật UI
+      populatePresetPickers();
+      
+      // 3. Tự động chọn
+      $('#decorationUrlInput').value = newUrl;
+      decorationSettings.url = newUrl;
+      treeDecoration.src = newUrl;
+      updatePreview($('#decoPreview'), newUrl);
+      syncPickersToInputs();
+      
+      // 4. Báo lưu
+      setUnsavedChanges(true);
+      scheduleRender();
+      alert('Đã thay thế preset. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
+    }
+    decoPresetInput.value = ''; // Reset
+  };
+  // ===== KẾT THÚC CẬP NHẬT =====
 
   $('#themeSelector').addEventListener('change', (e) => applyTheme(e.target.value));
   const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
   applyTheme(savedTheme);
 
-  $('#bgUrlInput').addEventListener('input', () => setUnsavedChanges(true)); updatePreview($('#bgPreview'), $('#bgUrlInput').value.trim());
+  $('#bgUrlInput').addEventListener('input', () => {
+    setUnsavedChanges(true);
+    syncPickersToInputs(); // <-- CẬP NHẬT: Đổi tên hàm
+  }); 
+  updatePreview($('#bgPreview'), $('#bgUrlInput').value.trim());
   $('#appTitle').addEventListener('blur', () => { if (isOwner) setUnsavedChanges(true); });
 
   // === THÊM MỚI: Logic cho nút Tải lên Ảnh Nền ===
@@ -2024,6 +2254,9 @@ function init() {
       canvasContainer.style.backgroundImage = `url(${newUrl})`;
       setUnsavedChanges(true);
       updatePreview($('#bgPreview'), newUrl);
+      
+      syncPickersToInputs(); // <-- CẬP NHẬT: Đổi tên hàm
+      
       alert('Đã tải lên ảnh nền. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
     }
     fileUploadBg.value = ''; // Reset
@@ -2046,6 +2279,9 @@ function init() {
       setUnsavedChanges(true);
       scheduleRender();
       updatePreview($('#decoPreview'), newUrl);
+      
+      syncPickersToInputs(); // <-- CẬP NHẬT: Đổi tên hàm
+      
       alert('Đã tải lên biểu tượng. Hãy bấm "Lưu Thay Đổi" để lưu vĩnh viễn.');
     }
     fileUploadDeco.value = ''; // Reset
@@ -2058,7 +2294,15 @@ function init() {
   $('#toggleDecoration').onchange = (e) => { decorationSettings.visible = e.target.checked; setUnsavedChanges(true); scheduleRender(); };
   decorationSizeSlider.addEventListener('input', (e) => { decorationSettings.size = parseInt(e.target.value, 10); decorationSizeLabel.textContent = decorationSettings.size; setUnsavedChanges(true); scheduleRender(); });
   decorationDistanceSlider.addEventListener('input', (e) => { decorationSettings.distance = parseInt(e.target.value, 10); decorationDistanceLabel.textContent = decorationSettings.distance; setUnsavedChanges(true); scheduleRender(); });
-  $('#decorationUrlInput').addEventListener('input', (e) => { decorationSettings.url = e.target.value; treeDecoration.src = e.target.value; setUnsavedChanges(true); updatePreview($('#decoPreview'), e.target.value); });
+  
+  $('#decorationUrlInput').addEventListener('input', (e) => { 
+    decorationSettings.url = e.target.value; 
+    treeDecoration.src = e.target.value; 
+    setUnsavedChanges(true); 
+    updatePreview($('#decoPreview'), e.target.value); 
+    
+    syncPickersToInputs(); // <-- CẬP NHẬT: Đổi tên hàm
+  });
 
   const imageSidebar = $('#image-sidebar'), audioSidebar = $('#audio-sidebar'), globalAudioPlayer = $('#global-audio-player');
   const closeAllMediaSidebars = () => { imageSidebar.classList.remove('show'); audioSidebar.classList.remove('show'); overlay.classList.remove('show-for-media'); };
